@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Force Strike Legacy Strategy</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #667085;
+      --line: #d9dee7;
+      --green: #16885f;
+      --red: #c93a3a;
+      --blue: #2b6cb0;
+      --amber: #b7791f;
+      --shadow: 0 18px 40px rgba(23, 32, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    main {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: 30px; letter-spacing: 0; margin-bottom: 8px; }
+    h2 { font-size: 20px; margin-bottom: 10px; }
+    h3 { font-size: 15px; margin-bottom: 8px; }
+    p, li { color: var(--muted); line-height: 1.55; }
+    a { color: var(--blue); text-decoration: none; font-weight: 700; }
+    .subhead { max-width: 780px; margin-bottom: 0; }
+    .nav { display: flex; gap: 10px; flex-wrap: wrap; }
+    .nav a, .tag {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .hero, .panel, .case {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .hero {
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+      gap: 22px;
+      margin-bottom: 18px;
+    }
+    .ticker-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .ticker {
+      border: 1px solid #cfd6e3;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 12px;
+      font-weight: 800;
+      background: #f8fafc;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcff;
+    }
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .metric strong { font-size: 22px; }
+    .positive { color: var(--green); }
+    .warning { color: var(--amber); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .panel, .case { padding: 18px; }
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    ul { padding-left: 18px; margin-bottom: 0; }
+    .cases {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .case-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .status {
+      border-radius: 6px;
+      padding: 5px 8px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .valid { background: var(--green); }
+    .invalid { background: var(--red); }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 8px 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcff;
+    }
+    .note {
+      border-left: 4px solid var(--amber);
+      background: #fffaf0;
+      padding: 12px 14px;
+      border-radius: 6px;
+      color: #704f13;
+      margin-top: 18px;
+    }
+    code {
+      background: #eef2f7;
+      border: 1px solid #d9dee7;
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-size: 0.92em;
+    }
+    @media (max-width: 860px) {
+      header, .hero { grid-template-columns: 1fr; display: block; }
+      .nav { margin-top: 14px; }
+      .grid, .rules, .cases { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Current Force Strike Strategy</h1>
+        <p class="subhead">The repo baseline is reset to the D1 legacy strategy. Swing/retrace remains available as archived research, but new heuristics should be compared against this legacy baseline before being kept.</p>
+      </div>
+      <nav class="nav" aria-label="Strategy navigation">
+        <a href="index.html">Dashboard</a>
+        <a href="ticker_strategy_recommendation.md">Recommendation Note</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div>
+        <span class="tag">Working baseline</span>
+        <h2>D1 legacy Force Strike, ATR stop, 1.5R target</h2>
+        <p>Use `configs/d1_current_legacy_filtered.json`. This is a fixed 14-symbol paper-test basket selected from the latest G8 legacy rerun. The goal is to keep the logic simple, raise trade count, and add future filters one at a time.</p>
+        <div class="ticker-list">
+          <span class="ticker">GBPAUD</span><span class="ticker">AUDUSD</span><span class="ticker">GBPCHF</span><span class="ticker">GBPJPY</span>
+          <span class="ticker">AUDCHF</span><span class="ticker">AUDNZD</span><span class="ticker">EURUSD</span><span class="ticker">USDCHF</span>
+          <span class="ticker">USDJPY</span><span class="ticker">AUDCAD</span><span class="ticker">GBPNZD</span><span class="ticker">NZDJPY</span>
+          <span class="ticker">CHFJPY</span><span class="ticker">EURJPY</span>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><span>Candidate</span><strong>TP 1.5R</strong></div>
+        <div class="metric"><span>Trades</span><strong>231</strong></div>
+        <div class="metric"><span>Net R</span><strong class="positive">+67.76R</strong></div>
+        <div class="metric"><span>Max DD</span><strong>6.75R</strong></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h3>Pattern</h3>
+        <ul>
+          <li>Formation length is 3 to 6 bars from mother bar to signal bar.</li>
+          <li>Bar 2 must stay inside or equal to the mother bar range.</li>
+          <li>Bullish signal breaks below the mother low, then closes back inside the mother range in the upper third of its own bar.</li>
+          <li>Bearish signal breaks above the mother high, then closes back inside the mother range in the lower third of its own bar.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Legacy Context</h3>
+        <ul>
+          <li>Signal forms around the 20/50 SMA retracement zone.</li>
+          <li>A 50 SMA anchor exists before the mother bar.</li>
+          <li>Impulse from the anchor is at least 1.5 ATR.</li>
+          <li>Trend-side ratio, anchor efficiency, pre-mother retrace, and recent progress gates must pass.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Trade Model</h3>
+        <ul>
+          <li>ATR stop model only for the baseline.</li>
+          <li>Target is 1.5R.</li>
+          <li>Next-bar open entry if risk is at most 1.25 ATR and still inside the mother range.</li>
+          <li>If both stop and target are touched in the same bar, stop gets priority.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="rules">
+      <div class="panel">
+        <h2>Valid Cases</h2>
+        <p>Valid examples have both parts: the Force Strike pattern and the legacy trend/retracement context.</p>
+      </div>
+      <div class="panel">
+        <h2>Invalid Cases</h2>
+        <p>Invalid examples can have a nice-looking candle pattern, but fail because the structure, context, or sequence is wrong.</p>
+      </div>
+    </section>
+
+    <section class="cases">
+      <article class="case">
+        <div class="case-head"><h3>Valid Bullish Force Strike</h3><span class="status valid">VALID</span></div>
+        <svg viewBox="0 0 520 190" role="img" aria-label="Valid bullish setup diagram">
+          <line x1="24" y1="122" x2="496" y2="84" stroke="#d99a2b" stroke-width="3"></line>
+          <line x1="24" y1="134" x2="496" y2="98" stroke="#c93a3a" stroke-width="3"></line>
+          <rect x="270" y="72" width="34" height="66" fill="#dfe6f1" stroke="#667085"></rect>
+          <line x1="270" y1="72" x2="430" y2="72" stroke="#667085" stroke-dasharray="4 4"></line>
+          <line x1="270" y1="138" x2="430" y2="138" stroke="#667085" stroke-dasharray="4 4"></line>
+          <path d="M36 142 L88 128 L142 92 L198 58 L246 70 L286 104 L332 146 L376 126 L416 86" fill="none" stroke="#16885f" stroke-width="4"></path>
+          <rect x="392" y="102" width="28" height="34" fill="#16885f"></rect>
+          <line x1="406" y1="145" x2="406" y2="80" stroke="#16885f" stroke-width="4"></line>
+          <text x="35" y="28" fill="#667085" font-size="13" font-weight="700">Impulse, retrace into 20/50, break below mother, close back inside</text>
+        </svg>
+        <ul>
+          <li>Prior trend and SMA context agree with long side.</li>
+          <li>Price retraces into the 20/50 zone before the mother bar.</li>
+          <li>Signal only breaks the mother low, then closes bullish inside the mother range.</li>
+        </ul>
+      </article>
+
+      <article class="case">
+        <div class="case-head"><h3>Valid Bearish Force Strike</h3><span class="status valid">VALID</span></div>
+        <svg viewBox="0 0 520 190" role="img" aria-label="Valid bearish setup diagram">
+          <line x1="24" y1="72" x2="496" y2="112" stroke="#d99a2b" stroke-width="3"></line>
+          <line x1="24" y1="58" x2="496" y2="96" stroke="#c93a3a" stroke-width="3"></line>
+          <rect x="270" y="58" width="34" height="66" fill="#dfe6f1" stroke="#667085"></rect>
+          <line x1="270" y1="58" x2="430" y2="58" stroke="#667085" stroke-dasharray="4 4"></line>
+          <line x1="270" y1="124" x2="430" y2="124" stroke="#667085" stroke-dasharray="4 4"></line>
+          <path d="M36 48 L92 64 L146 96 L196 132 L248 118 L294 86 L338 48 L374 68 L416 112" fill="none" stroke="#c93a3a" stroke-width="4"></path>
+          <rect x="392" y="62" width="28" height="34" fill="#c93a3a"></rect>
+          <line x1="406" y1="52" x2="406" y2="118" stroke="#c93a3a" stroke-width="4"></line>
+          <text x="35" y="28" fill="#667085" font-size="13" font-weight="700">Downtrend, pullback into 20/50, break above mother, close back inside</text>
+        </svg>
+        <ul>
+          <li>Prior trend and SMA context agree with short side.</li>
+          <li>Signal only breaks the mother high.</li>
+          <li>Signal closes bearish inside the mother range.</li>
+        </ul>
+      </article>
+
+      <article class="case">
+        <div class="case-head"><h3>Bar 2 Is Not Inside Mother</h3><span class="status invalid">INVALID</span></div>
+        <svg viewBox="0 0 520 190" role="img" aria-label="Invalid bar two diagram">
+          <rect x="160" y="58" width="40" height="76" fill="#dfe6f1" stroke="#667085"></rect>
+          <line x1="160" y1="58" x2="382" y2="58" stroke="#667085" stroke-dasharray="4 4"></line>
+          <line x1="160" y1="134" x2="382" y2="134" stroke="#667085" stroke-dasharray="4 4"></line>
+          <rect x="220" y="42" width="36" height="68" fill="#c93a3a"></rect>
+          <line x1="238" y1="34" x2="238" y2="148" stroke="#c93a3a" stroke-width="4"></line>
+          <rect x="292" y="104" width="34" height="28" fill="#16885f"></rect>
+          <line x1="309" y1="146" x2="309" y2="88" stroke="#16885f" stroke-width="4"></line>
+          <text x="52" y="28" fill="#667085" font-size="13" font-weight="700">The second bar violates the mother range before the setup is formed</text>
+        </svg>
+        <ul>
+          <li>The first baby bar must be inside or equal to the mother range.</li>
+          <li>If bar 2 breaks outside, the setup is rejected before entry logic matters.</li>
+        </ul>
+      </article>
+
+      <article class="case">
+        <div class="case-head"><h3>Two-Sided Mother Break</h3><span class="status invalid">INVALID</span></div>
+        <svg viewBox="0 0 520 190" role="img" aria-label="Invalid two-sided break diagram">
+          <rect x="160" y="62" width="40" height="66" fill="#dfe6f1" stroke="#667085"></rect>
+          <line x1="160" y1="62" x2="402" y2="62" stroke="#667085" stroke-dasharray="4 4"></line>
+          <line x1="160" y1="128" x2="402" y2="128" stroke="#667085" stroke-dasharray="4 4"></line>
+          <rect x="224" y="82" width="34" height="32" fill="#a7b0c2"></rect>
+          <line x1="241" y1="42" x2="241" y2="142" stroke="#a7b0c2" stroke-width="4"></line>
+          <rect x="294" y="78" width="34" height="32" fill="#a7b0c2"></rect>
+          <line x1="311" y1="50" x2="311" y2="150" stroke="#a7b0c2" stroke-width="4"></line>
+          <rect x="364" y="96" width="34" height="28" fill="#16885f"></rect>
+          <line x1="381" y1="142" x2="381" y2="74" stroke="#16885f" stroke-width="4"></line>
+          <text x="78" y="28" fill="#667085" font-size="13" font-weight="700">Both mother high and mother low were broken before the signal</text>
+        </svg>
+        <ul>
+          <li>A valid Force Strike is one-sided before the signal close.</li>
+          <li>If both mother extremes break, the setup is treated as noisy and discarded.</li>
+        </ul>
+      </article>
+
+      <article class="case">
+        <div class="case-head"><h3>No 20/50 Retracement Context</h3><span class="status invalid">INVALID</span></div>
+        <svg viewBox="0 0 520 190" role="img" aria-label="Invalid no SMA context diagram">
+          <line x1="24" y1="132" x2="496" y2="130" stroke="#d99a2b" stroke-width="3"></line>
+          <line x1="24" y1="140" x2="496" y2="138" stroke="#c93a3a" stroke-width="3"></line>
+          <path d="M36 68 L90 76 L142 66 L196 74 L250 68 L300 76 L354 70 L416 78" fill="none" stroke="#16885f" stroke-width="4"></path>
+          <rect x="316" y="56" width="34" height="48" fill="#dfe6f1" stroke="#667085"></rect>
+          <rect x="392" y="74" width="28" height="30" fill="#16885f"></rect>
+          <line x1="406" y1="112" x2="406" y2="52" stroke="#16885f" stroke-width="4"></line>
+          <text x="58" y="28" fill="#667085" font-size="13" font-weight="700">The candle pattern exists, but it is not forming around the 20/50 zone</text>
+        </svg>
+        <ul>
+          <li>The pattern alone is not enough.</li>
+          <li>The structure must overlap or sit close enough to the SMA retracement zone.</li>
+        </ul>
+      </article>
+
+      <article class="case">
+        <div class="case-head"><h3>Weak Or Stale Trend</h3><span class="status invalid">INVALID</span></div>
+        <svg viewBox="0 0 520 190" role="img" aria-label="Invalid weak trend diagram">
+          <line x1="24" y1="96" x2="496" y2="98" stroke="#d99a2b" stroke-width="3"></line>
+          <line x1="24" y1="102" x2="496" y2="103" stroke="#c93a3a" stroke-width="3"></line>
+          <path d="M36 96 L88 92 L142 101 L196 94 L248 100 L302 96 L356 102 L416 98" fill="none" stroke="#667085" stroke-width="4"></path>
+          <rect x="310" y="70" width="36" height="54" fill="#dfe6f1" stroke="#667085"></rect>
+          <rect x="392" y="90" width="28" height="30" fill="#16885f"></rect>
+          <line x1="406" y1="132" x2="406" y2="74" stroke="#16885f" stroke-width="4"></line>
+          <text x="100" y="28" fill="#667085" font-size="13" font-weight="700">Sideways drift does not satisfy the legacy trend-quality gates</text>
+        </svg>
+        <ul>
+          <li>There must be a usable 50 SMA anchor and directional impulse.</li>
+          <li>Flat, stale, or low-efficiency price action should fail the context gate.</li>
+        </ul>
+      </article>
+    </section>
+
+    <p class="note">The Pine script is now legacy-default for visual validation. The experimental retrace-close extra is disabled by default and should only be enabled for deliberate swing/retrace comparisons.</p>
+  </main>
+</body>
+</html>

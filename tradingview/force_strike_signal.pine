@@ -7,8 +7,8 @@ indicator(
      max_boxes_count = 200,
      max_labels_count = 200)
 
-// This indicator ports the current force_strike_lab signal logic for chart-side
-// visual validation on TradingView candles.
+// This indicator ports the current legacy force_strike_lab signal logic for
+// chart-side visual validation on TradingView candles.
 //
 // Important chart-source boundary:
 // - TradingView signals are evaluated only from the OHLC candles shown on the
@@ -45,10 +45,11 @@ minImpulseAtr = input.float(1.5, "Minimum impulse ATR", minval = 0.0, step = 0.2
 trendSideLookbackBars = input.int(24, "Trend-side lookback bars", minval = 1, maxval = 100, group = groupContext)
 minTrendSideRatio = input.float(0.45, "Minimum trend-side ratio", minval = 0.0, maxval = 1.0, step = 0.05, group = groupContext)
 minAnchorEfficiency = input.float(0.22, "Minimum anchor efficiency", minval = 0.0, step = 0.01, group = groupContext)
-minSmaSlopeAtr = input.float(0.10, "Minimum 50-SMA slope ATR", minval = 0.0, step = 0.05, group = groupContext)
+minSmaSlopeAtr = input.float(0.0, "Minimum 50-SMA slope ATR", minval = 0.0, step = 0.05, group = groupContext)
 minPreMotherRetraceAtr = input.float(0.75, "Minimum pre-mother retrace ATR", minval = 0.0, step = 0.25, group = groupContext)
-minPriorRetraceCloseAtr = input.float(0.50, "Minimum prior retrace close ATR", minval = 0.0, step = 0.25, group = groupContext)
 minPreMotherRetraceBars = input.int(1, "Minimum pre-mother retrace bars", minval = 0, maxval = 20, group = groupContext)
+useSwingRetraceQuality = input.bool(false, "Use experimental retrace-close extra", group = groupContext)
+minPriorRetraceCloseAtr = input.float(0.25, "Minimum prior retrace close ATR", minval = 0.0, step = 0.25, group = groupContext)
 recentProgressLookbackBars = input.int(12, "Recent progress lookback bars", minval = 1, maxval = 100, group = groupContext)
 maxAnchorBarsWithoutRecentProgress = input.int(12, "Max anchor bars before stale check", minval = 0, maxval = 100, group = groupContext)
 minRecentProgressAtr = input.float(-0.25, "Minimum recent progress ATR", step = 0.25, group = groupContext)
@@ -241,7 +242,7 @@ f_trend_context_ok(int motherOff, int signalOff, int side, float structureLow, f
             bool anchorPriceOk = side > 0 ? anchorClose < structureLow : anchorClose > structureHigh
             bool impulseOk = impulseAtr >= minImpulseAtr
             float smaSlopeAtr = side > 0 ? (signalSma - anchorSma) / rowAtr : (anchorSma - signalSma) / rowAtr
-            bool smaSlopeOk = smaSlopeAtr >= minSmaSlopeAtr
+            bool smaSlopeOk = minSmaSlopeAtr <= 0.0 ? smaSlopeAtr > 0.0 : smaSlopeAtr >= minSmaSlopeAtr
             float impulseRange = impulseHigh - impulseLow
             float efficiency = impulseRange > 0.0 ? math.abs(close[motherOff] - anchorClose) / impulseRange : na
             bool efficiencyOk = not na(efficiency) and efficiency >= minAnchorEfficiency
@@ -250,7 +251,7 @@ f_trend_context_ok(int motherOff, int signalOff, int side, float structureLow, f
             [retraceAtr, retraceBars] = f_pre_mother_retrace(anchorOff, motherOff, side, rowAtr)
             float retraceCloseAtr = f_pre_mother_retrace_close(anchorOff, motherOff, side, rowAtr)
             bool retraceOk = retraceAtr >= minPreMotherRetraceAtr and retraceBars >= minPreMotherRetraceBars
-            bool retraceCloseOk = retraceCloseAtr >= minPriorRetraceCloseAtr
+            bool retraceCloseOk = not useSwingRetraceQuality or retraceCloseAtr >= minPriorRetraceCloseAtr
             bool recentOk = true
             float recentAtr = na
             if anchorOff - motherOff > maxAnchorBarsWithoutRecentProgress

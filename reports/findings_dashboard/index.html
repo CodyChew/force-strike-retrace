@@ -611,6 +611,7 @@
         <h1>Force Strike Findings Dashboard</h1>
         <p class="subhead">A decision board for the D1 Force Strike retracement idea: current strategy state, refreshed backtest results, and practical alternatives for the next research pass.</p>
         <nav class="nav-links" aria-label="Dashboard sections">
+          <a href="strategy.html">Strategy Guide</a>
           <a href="#current-state">Current State</a>
           <a href="#alternatives">Alternatives</a>
           <a href="#g8-comparison">Legacy vs Swing</a>
@@ -627,32 +628,42 @@
         <div class="verdict-row">
           <span class="verdict">Current state: research edge, not live-ready</span>
           <span class="tag">D1 only</span>
-          <span class="tag win">Best first paper candidate</span>
+          <span class="tag win">Legacy baseline reset</span>
         </div>
-        <h2>Trade the focused D1 swing/retrace core first, then compare it against the aggressive legacy basket.</h2>
-        <p>The cleanest candidate is not the highest historical R. It is the one with the best balance of return, drawdown, split behavior, and leave-one-symbol-out robustness. M30 is rejected, H4 is not standalone, and broad G8 should not be traded unfiltered.</p>
+        <h2>Use the D1 legacy filtered basket as the working baseline, then add one heuristic at a time.</h2>
+        <p>The strategy reset favors clarity and trade count. Legacy TP 1.5R has the strongest saved historical net R among the filtered candidates, while swing/retrace remains archived as a stricter challenger instead of the current strategy.</p>
         <div class="ticker-list" aria-label="Recommended tickers">
           <span class="ticker">GBPAUD</span>
-          <span class="ticker">GBPJPY</span>
+          <span class="ticker">AUDUSD</span>
           <span class="ticker">GBPCHF</span>
+          <span class="ticker">GBPJPY</span>
+          <span class="ticker">AUDCHF</span>
+          <span class="ticker">AUDNZD</span>
+          <span class="ticker">EURUSD</span>
+          <span class="ticker">USDCHF</span>
+          <span class="ticker">USDJPY</span>
+          <span class="ticker">AUDCAD</span>
+          <span class="ticker">GBPNZD</span>
+          <span class="ticker">NZDJPY</span>
           <span class="ticker">CHFJPY</span>
+          <span class="ticker">EURJPY</span>
         </div>
         <div class="decision-metrics">
           <div class="decision-metric">
             <span>Strategy</span>
-            <strong>D1 swing/retrace</strong>
+            <strong>D1 legacy</strong>
           </div>
           <div class="decision-metric">
             <span>Candidate</span>
-            <strong>ATR TP 2.0R</strong>
+            <strong>ATR TP 1.5R</strong>
           </div>
           <div class="decision-metric">
             <span>Backtest</span>
-            <strong class="positive">+33.31R</strong>
+            <strong class="positive">+67.76R</strong>
           </div>
           <div class="decision-metric">
             <span>Max drawdown</span>
-            <strong>3.07R</strong>
+            <strong>6.75R</strong>
           </div>
         </div>
       </div>
@@ -663,21 +674,21 @@
             <span class="rank">1</span>
             <div>
               <strong>Is there a real strategy edge?</strong>
-              <span>Current answer: maybe on D1, specifically in a focused cross basket. Not on M30, not broad G8 unfiltered.</span>
+              <span>Current answer: maybe on D1 after symbol filtering. The unfiltered G8 basket is still not a trade plan.</span>
             </div>
           </div>
           <div class="priority">
             <span class="rank">2</span>
             <div>
               <strong>Which rules should stay?</strong>
-              <span>`swing_retrace_v1` improves broad G8 quality, but legacy-positive symbols deserve an aggressive comparison track.</span>
+              <span>Legacy is the baseline again. Swing/retrace is an archived experiment until it beats legacy on a controlled test.</span>
             </div>
           </div>
           <div class="priority">
             <span class="rank">3</span>
             <div>
               <strong>What should be tested next?</strong>
-              <span>Run paper/forward tests for the conservative core and aggressive legacy-positive basket side by side.</span>
+              <span>Paper-test the fixed legacy basket and add or remove only one heuristic per experiment.</span>
             </div>
           </div>
         </div>
@@ -688,7 +699,7 @@
       <div class="section-header">
         <div>
           <h2>Decision Alternatives</h2>
-          <p class="summary">These are the practical choices from the current evidence. The conservative path optimizes robustness; the aggressive path optimizes historical R and needs forward validation.</p>
+          <p class="summary">These are the practical choices from the current evidence. The baseline now optimizes trade count and simplicity; stricter swing/retrace remains a comparison path.</p>
         </div>
         <span class="tag">Choose by risk tolerance</span>
       </div>
@@ -696,43 +707,43 @@
         <div class="scenario">
           <div>
             <div class="headline">
-              <h3>Conservative Core</h3>
+              <h3>Current Legacy Baseline</h3>
               <span class="tag win">Recommended</span>
             </div>
-            <p>D1 `swing_retrace_v1`, `fs_atr_tp2p0_sma0p0_risk1p25`, trading GBPAUD, GBPJPY, GBPCHF, CHFJPY.</p>
+            <p>D1 legacy mode, `fs_atr_tp1p5_sma0p0_risk1p25`, trading the 14 historically positive symbols as a fixed paper-test basket.</p>
           </div>
           <div class="stats">
-            <div>Net R<strong>+33.31</strong></div>
-            <div>PF<strong>2.64</strong></div>
-            <div>DD<strong>3.07R</strong></div>
+            <div>Net R<strong>+67.76</strong></div>
+            <div>PF<strong>1.61</strong></div>
+            <div>DD<strong>6.75R</strong></div>
           </div>
         </div>
         <div class="scenario">
           <div>
             <div class="headline">
-              <h3>Aggressive Legacy Positive</h3>
-              <span class="tag">Higher R</span>
+              <h3>Lower Target Legacy</h3>
+              <span class="tag">More trades</span>
             </div>
-            <p>Legacy mode on all full-sample positive symbols. Strong historical result, but selected with hindsight and more basket complexity.</p>
+            <p>D1 legacy mode, `fs_atr_tp1p25_sma0p0_risk1p25`. Slightly more trades and lower reported drawdown, but less net R than TP 1.5R.</p>
           </div>
           <div class="stats">
             <div>Net R<strong>+62.67</strong></div>
             <div>PF<strong>1.61</strong></div>
-            <div>DD<strong>7.86R</strong></div>
+            <div>DD<strong>5.08R</strong></div>
           </div>
         </div>
         <div class="scenario">
           <div>
             <div class="headline">
-              <h3>Broad G8 Latest</h3>
-              <span class="tag loss">Do not trade raw</span>
+              <h3>Swing/Retrace Archive</h3>
+              <span class="tag">Challenger</span>
             </div>
-            <p>Latest swing/retrace is better than legacy on all 28 pairs, but weak pairs dilute the edge and increase drawdown.</p>
+            <p>D1 `swing_retrace_v1`, expanded 12-symbol TP 2.0R basket. Cleaner logic, fewer trades, not the current baseline.</p>
           </div>
           <div class="stats">
-            <div>Net R<strong>+11.27</strong></div>
-            <div>PF<strong>1.07</strong></div>
-            <div>DD<strong>16.16R</strong></div>
+            <div>Net R<strong>+55.42</strong></div>
+            <div>PF<strong>1.72</strong></div>
+            <div>DD<strong>7.19R</strong></div>
           </div>
         </div>
       </div>
@@ -740,34 +751,34 @@
 
     <section class="grid kpis" aria-label="Key findings">
       <div class="kpi">
-        <h3>Exact G8 Logic Delta</h3>
-        <strong class="positive">+29.12R</strong>
-        <p class="note">Latest swing/retrace full net R minus original legacy full net R.</p>
+        <h3>Current Baseline</h3>
+        <strong class="positive">+67.76R</strong>
+        <p class="note">Legacy TP 1.5R on the fixed 14-symbol filtered basket.</p>
       </div>
       <div class="kpi">
-        <h3>G8 Signal Cut</h3>
-        <strong class="neutral">-33%</strong>
-        <p class="note">Signals fell from 544 to 362 after the stricter prior swing filter.</p>
+        <h3>Trade Count</h3>
+        <strong class="neutral">231</strong>
+        <p class="note">About 23 to 24 D1 trades per year across the basket.</p>
       </div>
       <div class="kpi">
-        <h3>G8 Drawdown Cut</h3>
-        <strong class="positive">-57%</strong>
-        <p class="note">Max drawdown fell from 37.59R to 16.16R in the exact comparison.</p>
+        <h3>Symbol Filter Risk</h3>
+        <strong class="loss">Hindsight</strong>
+        <p class="note">The basket was selected from historical winners; forward validation must keep it fixed.</p>
       </div>
       <div class="kpi">
-        <h3>Best Quality Result</h3>
-        <strong class="positive">D1 4-pair</strong>
-        <p class="note">Still the strongest shape: +20.14R, PF 1.66, max DD 5.61R.</p>
+        <h3>Archived Challenger</h3>
+        <strong class="positive">Swing TP 2.0R</strong>
+        <p class="note">Expanded swing basket: +55.42R, PF 1.72, 143 trades.</p>
       </div>
     </section>
 
     <section class="section" id="g8-comparison">
       <div class="section-header">
         <div>
-          <h2>Original vs Latest Prior Swing Logic</h2>
-          <p class="summary">This isolates the rule change on the same 28-pair D1 G8 universe and refreshed data. It does not compare against the smaller original 4-pair D1 basket.</p>
+          <h2>Archived Swing Experiment</h2>
+          <p class="summary">This keeps the rule-change evidence visible without making swing/retrace the current strategy. On all 28 D1 G8 pairs, swing/retrace improved broad quality, but the current baseline is the filtered legacy basket above.</p>
         </div>
-        <span class="tag win">Latest wins exact comparison</span>
+        <span class="tag">Not the baseline</span>
       </div>
       <div class="grid comparison-grid">
         <div class="chart-panel">
@@ -810,9 +821,9 @@
       <div class="section-header">
         <div>
           <h2>Strategy Runs</h2>
-          <p class="summary">The broader rerun shows why the pre-crash comment sounded worse: the latest G8 expansion is better than legacy G8, but weaker than the original focused D1 4-pair result.</p>
+          <p class="summary">The current row is a filtered basket derived from the legacy G8 rerun. The other rows remain useful for context and regression checks.</p>
         </div>
-        <span class="tag">8 refreshed runs</span>
+        <span class="tag">9 tracked views</span>
       </div>
       <div class="grid comparison-grid">
         <div class="chart-panel tall">
@@ -856,22 +867,22 @@
       <div class="section-header">
         <div>
           <h2>D1 G8 Symbol Contribution</h2>
-          <p class="summary">Latest G8 improves the logic comparison, but contribution is uneven. Positive net R is concentrated in selected non-USD crosses, while several majors remain weak.</p>
+          <p class="summary">The current legacy baseline uses positive historical contributors only. This is useful for a paper-test watchlist, but it must be treated as selection risk.</p>
         </div>
-        <span class="tag loss">Broad basket still weak</span>
+        <span class="tag loss">Do not trade broad G8 raw</span>
       </div>
       <div class="grid comparison-grid">
         <div class="chart-panel tall">
           <div class="chart-title">
-            <h3>Latest swing/retrace G8</h3>
+            <h3>Swing/retrace G8 archive</h3>
             <span>Top and bottom symbols by net R</span>
           </div>
           <div id="symbolChart"></div>
         </div>
         <div class="chart-panel tall">
           <div class="chart-title">
-            <h3>Original legacy G8</h3>
-            <span>Top and bottom symbols by net R</span>
+            <h3>Current legacy filtered baseline</h3>
+            <span>Positive symbols by net R</span>
           </div>
           <div id="legacySymbolChart"></div>
         </div>
@@ -908,6 +919,7 @@
 
   <script>
     const runs = [
+      { label: "D1 current legacy filtered", short: "Current legacy", candidate: "fs_atr_tp1p5_sma0p0_risk1p25", signals: 269, trades: 231, fullR: 67.764, pf: 1.607, dd: 6.755, discovery: 26.305, selection: 19.871, holdout: 21.588, holdoutPf: 1.887 },
       { label: "M30 baseline 4-pair", short: "M30 4-pair", candidate: "fs_atr_tp1p5_sma0p0_risk1p25", signals: 1098, trades: 964, fullR: -241.888, pf: 0.661, dd: 253.007, discovery: -129.723, selection: -84.690, holdout: -27.476, holdoutPf: 0.785 },
       { label: "H4 baseline 4-pair", short: "H4 4-pair", candidate: "fs_structure_tp2p0_sma0p0_risk1p25", signals: 225, trades: 173, fullR: -12.254, pf: 0.899, dd: 16.174, discovery: -22.264, selection: 7.626, holdout: 2.384, holdoutPf: 1.125 },
       { label: "D1 baseline 4-pair", short: "D1 4-pair", candidate: "fs_atr_tp1p5_sma0p0_risk1p25", signals: 73, trades: 64, fullR: 20.144, pf: 1.663, dd: 5.607, discovery: 5.073, selection: 6.764, holdout: 8.308, holdoutPf: 2.642 },
@@ -925,9 +937,9 @@
     ];
 
     const legacyG8Symbols = [
-      ["GBPAUD", 10.802, 16], ["GBPCHF", 9.715, 17], ["AUDCHF", 8.053, 23], ["AUDUSD", 7.513, 17], ["GBPJPY", 5.898, 23],
-      ["USDJPY", 4.597, 11], ["AUDCAD", 4.093, 18], ["AUDNZD", 3.585, 14], ["EURJPY", 2.656, 24], ["EURUSD", 2.042, 18],
-      ["EURCHF", -7.067, 18], ["NZDUSD", -7.434, 25], ["GBPCAD", -8.200, 17], ["GBPUSD", -8.763, 22], ["NZDCHF", -10.674, 19], ["USDCAD", -12.266, 21]
+      ["GBPAUD", 12.314, 15], ["AUDUSD", 10.260, 17], ["GBPCHF", 10.214, 17], ["GBPJPY", 6.656, 23], ["AUDCHF", 6.559, 23],
+      ["AUDNZD", 5.609, 14], ["EURUSD", 4.292, 18], ["USDCHF", 3.865, 16], ["USDJPY", 3.844, 11], ["AUDCAD", 1.597, 18],
+      ["GBPNZD", 1.389, 11], ["NZDJPY", 0.677, 14], ["CHFJPY", 0.306, 12], ["EURJPY", 0.182, 22]
     ];
 
     const colors = {

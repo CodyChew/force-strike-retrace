@@ -1,81 +1,75 @@
 # Ticker And Strategy Recommendation
 
-Generated from the fresh D1 G8 `swing_retrace_v1` rerun ending 2026-04-27.
+Generated from the fresh D1 G8 reruns ending 2026-04-27.
 
-## Recommendation
+## Current Working Baseline
 
-Use the D1 `swing_retrace_v1` context logic with:
+Use the D1 legacy context logic with:
 
-- Candidate: `fs_atr_tp2p0_sma0p0_risk1p25`
-- Tickers: `GBPAUD`, `GBPJPY`, `GBPCHF`, `CHFJPY`
+- Config: `configs/d1_current_legacy_filtered.json`
+- Candidate: `fs_atr_tp1p5_sma0p0_risk1p25`
+- Tickers: `GBPAUD`, `AUDUSD`, `GBPCHF`, `GBPJPY`, `AUDCHF`, `AUDNZD`, `EURUSD`, `USDCHF`, `USDJPY`, `AUDCAD`, `GBPNZD`, `NZDJPY`, `CHFJPY`, `EURJPY`
 
 Candidate meaning:
 
+- Legacy prior price-action mode.
 - ATR stop model.
-- Target: 2.0R.
+- Target: 1.5R.
 - SMA touch buffer: 0.0 ATR.
 - Maximum entry risk: 1.25 ATR.
 
-## Why This Set
+## Baseline Result
 
-This is not the highest possible historical net R after filtering symbols. It is the best balance I found between profitability and robustness:
+This is the current baseline because it gives materially more trades than the conservative swing/retrace basket while keeping the historical result positive:
 
-- 47 trades.
-- Full net R: +33.31R.
-- Profit factor: 2.64.
-- Max drawdown: 3.07R.
-- Discovery net R: +13.58R.
-- Selection net R: +4.93R.
-- Holdout net R: +14.80R.
-- Positive years: 9 of 10.
-- Worst year: -0.02R.
+- 231 trades.
+- Full net R: +67.76R.
+- Profit factor: 1.61.
+- Max drawdown: 6.75R using the repo report metric.
+- Discovery net R: +26.30R.
+- Selection net R: +19.87R.
+- Holdout net R: +21.59R.
+- Approximate frequency: 23 to 24 trades per year across the basket.
 
 Per symbol:
 
-| Symbol | Trades | Net R | PF | Max DD | Discovery | Selection | Holdout |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| GBPAUD | 12 | +11.87R | 3.93 | 1.02R | +4.94R | +1.99R | +4.94R |
-| GBPCHF | 11 | +9.80R | 3.39 | 2.06R | +4.84R | +1.99R | +2.96R |
-| GBPJPY | 15 | +8.76R | 2.24 | 3.03R | +2.84R | +0.00R | +5.92R |
-| CHFJPY | 9 | +2.88R | 1.57 | 2.02R | -2.04R | +2.97R | +1.95R |
+| Symbol | Trades | Net R | PF |
+|---|---:|---:|---:|
+| GBPAUD | 15 | +12.31R | 4.04 |
+| AUDUSD | 17 | +10.26R | 2.69 |
+| GBPCHF | 17 | +10.21R | 2.66 |
+| GBPJPY | 23 | +6.66R | 1.60 |
+| AUDCHF | 23 | +6.56R | 1.58 |
+| AUDNZD | 14 | +5.61R | 1.92 |
+| EURUSD | 18 | +4.29R | 1.47 |
+| USDCHF | 16 | +3.87R | 1.48 |
+| USDJPY | 11 | +3.84R | 1.76 |
+| AUDCAD | 18 | +1.60R | 1.16 |
+| GBPNZD | 11 | +1.39R | 1.23 |
+| NZDJPY | 14 | +0.68R | 1.08 |
+| CHFJPY | 12 | +0.31R | 1.04 |
+| EURJPY | 22 | +0.18R | 1.01 |
 
-Leave-one-symbol-out remained positive:
+## Nearby Alternative
 
-| Excluded | Trades | Net R | PF | Max DD | Holdout |
-|---|---:|---:|---:|---:|---:|
-| CHFJPY | 38 | +30.43R | 3.00 | 3.07R | +12.85R |
-| GBPJPY | 32 | +24.55R | 2.86 | 3.11R | +8.87R |
-| GBPCHF | 36 | +23.51R | 2.45 | 3.06R | +12.81R |
-| GBPAUD | 35 | +21.44R | 2.32 | 4.04R | +9.86R |
+Legacy `fs_atr_tp1p25_sma0p0_risk1p25` on its positive-symbol basket is also valid:
 
-## Higher-R But Less Conservative Alternative
+- 235 trades.
+- Full net R: +62.67R.
+- Profit factor: 1.61.
+- Max drawdown: 5.08R using the repo report metric.
 
-A mechanically filtered 10-symbol basket with `fs_atr_tp2p5_sma0p0_risk1p25` produced +55.83R:
+Use this if the priority is slightly more trades and a lower target. Use TP 1.5R if the priority is the strongest historical net R in the saved legacy tests.
 
-- Tickers: `AUDJPY`, `AUDNZD`, `AUDUSD`, `CADCHF`, `CHFJPY`, `EURUSD`, `GBPAUD`, `GBPCHF`, `GBPJPY`, `NZDCAD`
-- Trades: 117.
-- PF: 1.82.
-- Max drawdown: 9.47R.
-- Holdout: +14.53R.
-- Worst year: -4.87R.
+## Archived Challenger
 
-I do not recommend this as the first live candidate because the ticker list is selected using full-history knowledge and has materially higher drawdown and weaker year stability.
+The swing/retrace experiment remains useful, but it is no longer the working baseline:
 
-## Avoid For Now
+- Expanded swing `fs_atr_tp2p0_sma0p0_risk1p25`, 12 symbols: 143 trades, +55.42R, PF 1.72, max DD 7.19R.
+- Conservative swing core, 4 symbols: 47 trades, +33.31R, PF 2.64, max DD 3.05R.
 
-Do not include these in the core basket:
-
-- `USDCAD`
-- `GBPUSD`
-- `EURCHF`
-- `NZDCHF`
-- `GBPCAD`
-- `CADJPY`
-- `AUDCAD`
-- `EURNZD`
-
-They either lost materially in the latest G8 run or showed weak split/holdout behavior.
+Swing/retrace is cleaner and stricter, but it produces fewer trades. It should only replace legacy if a future controlled test beats this legacy baseline after accounting for trade count.
 
 ## Operating Constraint
 
-This remains historical backtest evidence, not proof of future edge. Before live use, visually validate the accepted D1 setups for the recommended tickers and run a forward/paper period with fixed risk.
+This remains historical backtest evidence, not proof of future edge. The legacy filtered basket was chosen using historical symbol performance, so the next validation step should be fixed-list paper/forward testing without reselecting symbols.

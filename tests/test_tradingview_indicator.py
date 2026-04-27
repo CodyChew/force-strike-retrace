@@ -50,7 +50,7 @@ class TradingViewIndicatorTests(unittest.TestCase):
 
     def test_pine_default_inputs_match_current_strategy_config(self) -> None:
         source = _pine_source()
-        strategy = load_config(PROJECT_ROOT / "configs" / "d1_forex_basket.json").strategy
+        strategy = load_config(PROJECT_ROOT / "configs" / "d1_current_legacy_filtered.json").strategy
         expected = {
             "minTotalBarsInput": strategy.min_total_bars,
             "maxTotalBarsInput": strategy.max_total_bars,
@@ -65,8 +65,11 @@ class TradingViewIndicatorTests(unittest.TestCase):
             "trendSideLookbackBars": strategy.trend_side_lookback_bars,
             "minTrendSideRatio": strategy.min_trend_side_ratio,
             "minAnchorEfficiency": strategy.min_anchor_efficiency,
+            "minSmaSlopeAtr": strategy.min_sma_slope_atr,
             "minPreMotherRetraceAtr": strategy.min_pre_mother_retrace_atr,
             "minPreMotherRetraceBars": strategy.min_pre_mother_retrace_bars,
+            "useSwingRetraceQuality": False,
+            "minPriorRetraceCloseAtr": strategy.min_prior_retrace_close_atr,
             "recentProgressLookbackBars": strategy.recent_progress_lookback_bars,
             "maxAnchorBarsWithoutRecentProgress": strategy.max_anchor_bars_without_recent_progress,
             "minRecentProgressAtr": strategy.min_recent_progress_atr,
@@ -82,8 +85,9 @@ class TradingViewIndicatorTests(unittest.TestCase):
         self.assertTrue(_input_default(source, "showMotherRange"))
         self.assertFalse(_input_default(source, "showDiagnostics"))
         self.assertTrue(_input_default(source, "confirmOnClose"))
-        self.assertEqual(_input_default(source, "minSmaSlopeAtr"), 0.10)
-        self.assertEqual(_input_default(source, "minPriorRetraceCloseAtr"), 0.50)
+        self.assertEqual(_input_default(source, "minSmaSlopeAtr"), 0.0)
+        self.assertFalse(_input_default(source, "useSwingRetraceQuality"))
+        self.assertEqual(_input_default(source, "minPriorRetraceCloseAtr"), 0.25)
 
     def test_pine_keeps_chart_source_boundary_documented(self) -> None:
         source = _pine_source()
@@ -98,11 +102,12 @@ class TradingViewIndicatorTests(unittest.TestCase):
         self.assertIn("bool acceptedCandidate = ctxOk and not priorAccepted", source)
         self.assertIn("bool rejectedCandidate = not ctxOk and not priorRaw", source)
 
-    def test_pine_exposes_swing_then_retrace_filters(self) -> None:
+    def test_pine_exposes_optional_swing_retrace_extra(self) -> None:
         source = _pine_source()
         self.assertIn("f_pre_mother_retrace_close", source)
-        self.assertIn("bool smaSlopeOk = smaSlopeAtr >= minSmaSlopeAtr", source)
-        self.assertIn("bool retraceCloseOk = retraceCloseAtr >= minPriorRetraceCloseAtr", source)
+        self.assertIn("bool smaSlopeOk = minSmaSlopeAtr <= 0.0 ? smaSlopeAtr > 0.0 : smaSlopeAtr >= minSmaSlopeAtr", source)
+        self.assertIn("useSwingRetraceQuality = input.bool(false", source)
+        self.assertIn("bool retraceCloseOk = not useSwingRetraceQuality or retraceCloseAtr >= minPriorRetraceCloseAtr", source)
         self.assertIn("Fail: retrace close", source)
 
     def test_pine_exposes_client_signal_alerts(self) -> None:

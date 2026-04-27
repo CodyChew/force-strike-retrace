@@ -9,18 +9,19 @@ Default behavior is intentionally clean:
 - no rejected raw patterns
 - no diagnostic labels
 
-The current visual filter is stricter than the original baseline: it expects a
-clear 50 SMA slope plus a prior impulse followed by an opposite close
-retracement before the Force Strike forms. For bullish setups, that means prior
-upside first, then downside retracement into the moving-average area. Bearish is
-the mirror image.
+The default visual filter is the current legacy baseline. It expects a valid
+Force Strike pattern around the 20/50 SMA retracement area, a valid 50 SMA
+anchor, meaningful impulse, trend-side agreement, pre-mother retracement, and
+recent progress. The experimental retrace-close extra is available but disabled
+by default.
 
 Useful validation toggles:
 - `Show diagnostic label`: shows the main pass/fail context details.
 - `Show rejected raw patterns`: shows raw Force Strike patterns that fail the current context gate.
 - `Confirm on candle close`: keeps realtime signals from appearing before the signal candle closes.
 - `Minimum 50-SMA slope ATR`: raises/lowers the flat-trend rejection threshold.
-- `Minimum prior retrace close ATR`: controls how much close-based retracement is required after the prior swing.
+- `Use experimental retrace-close extra`: enables the archived swing/retrace-style close retracement check.
+- `Minimum prior retrace close ATR`: controls that optional close-based retracement check.
 
 Python remains the research source of truth for basket testing, fills, costs, candidate ranking, and reports. This Pine script is for client-facing visual verification on the chart that TradingView displays.
 
