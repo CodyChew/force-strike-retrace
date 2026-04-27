@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Force Strike Recommendation</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #667085;
+      --line: #d9dee7;
+      --green: #16885f;
+      --red: #c93a3a;
+      --blue: #2b6cb0;
+      --amber: #b7791f;
+      --shadow: 0 18px 40px rgba(23, 32, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    main {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: 30px; margin-bottom: 8px; }
+    h2 { font-size: 20px; margin-bottom: 10px; }
+    h3 { font-size: 15px; margin-bottom: 8px; }
+    p, li { color: var(--muted); line-height: 1.55; }
+    a { color: var(--blue); text-decoration: none; font-weight: 800; }
+    code {
+      background: #eef2f7;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 1px 5px;
+    }
+    .nav { display: flex; gap: 10px; flex-wrap: wrap; }
+    .nav a, .tag {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .hero, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .hero {
+      padding: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .panel { padding: 18px; }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcff;
+    }
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+    .metric strong { font-size: 22px; }
+    .positive { color: var(--green); }
+    .warning { color: var(--amber); }
+    .ticker-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .ticker {
+      border: 1px solid #cfd6e3;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 12px;
+      font-weight: 900;
+      background: #f8fafc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 9px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+    th { color: var(--muted); font-size: 12px; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .note {
+      border-left: 4px solid var(--amber);
+      background: #fffaf0;
+      padding: 12px 14px;
+      border-radius: 6px;
+      color: #704f13;
+      margin-top: 16px;
+    }
+    @media (max-width: 860px) {
+      header, .hero { display: block; }
+      .nav { margin-top: 14px; }
+      .grid, .metrics { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Ticker And Strategy Recommendation</h1>
+        <p>Current recommendation from the D1 G8 reruns ending 2026-04-27.</p>
+      </div>
+      <nav class="nav" aria-label="Recommendation navigation">
+        <a href="index.html">Dashboard</a>
+        <a href="strategy.html">Strategy Guide</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div>
+        <span class="tag">Current working baseline</span>
+        <h2>D1 legacy filtered basket, TP 1.5R</h2>
+        <p>Use <code>configs/d1_current_legacy_filtered.json</code>. This is the clean starting point for future heuristics because it is simpler than swing/retrace and gives enough trade frequency to evaluate forward.</p>
+        <div class="ticker-list">
+          <span class="ticker">GBPAUD</span><span class="ticker">AUDUSD</span><span class="ticker">GBPCHF</span><span class="ticker">GBPJPY</span>
+          <span class="ticker">AUDCHF</span><span class="ticker">AUDNZD</span><span class="ticker">EURUSD</span><span class="ticker">USDCHF</span>
+          <span class="ticker">USDJPY</span><span class="ticker">AUDCAD</span><span class="ticker">GBPNZD</span><span class="ticker">NZDJPY</span>
+          <span class="ticker">CHFJPY</span><span class="ticker">EURJPY</span>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><span>Candidate</span><strong>ATR TP 1.5R</strong></div>
+        <div class="metric"><span>Trades</span><strong>231</strong></div>
+        <div class="metric"><span>Net R</span><strong class="positive">+67.76R</strong></div>
+        <div class="metric"><span>Profit Factor</span><strong>1.61</strong></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h3>Why This Is Baseline</h3>
+        <p>It has the highest saved historical net R among the practical options and produces about 23 to 24 D1 trades per year across the basket.</p>
+      </div>
+      <div class="panel">
+        <h3>Main Caveat</h3>
+        <p>The tickers were selected from historical winners. The next validation must keep the list fixed and avoid reselecting symbols after each run.</p>
+      </div>
+      <div class="panel">
+        <h3>Next Research Rule</h3>
+        <p>Add one heuristic at a time and compare it against this exact config. Keep it only if it improves return, drawdown, stability, and trade count.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Per-Symbol Result</h2>
+      <table>
+        <thead><tr><th>Symbol</th><th class="num">Trades</th><th class="num">Net R</th><th class="num">PF</th></tr></thead>
+        <tbody>
+          <tr><td>GBPAUD</td><td class="num">15</td><td class="num positive">+12.31R</td><td class="num">4.04</td></tr>
+          <tr><td>AUDUSD</td><td class="num">17</td><td class="num positive">+10.26R</td><td class="num">2.69</td></tr>
+          <tr><td>GBPCHF</td><td class="num">17</td><td class="num positive">+10.21R</td><td class="num">2.66</td></tr>
+          <tr><td>GBPJPY</td><td class="num">23</td><td class="num positive">+6.66R</td><td class="num">1.60</td></tr>
+          <tr><td>AUDCHF</td><td class="num">23</td><td class="num positive">+6.56R</td><td class="num">1.58</td></tr>
+          <tr><td>AUDNZD</td><td class="num">14</td><td class="num positive">+5.61R</td><td class="num">1.92</td></tr>
+          <tr><td>EURUSD</td><td class="num">18</td><td class="num positive">+4.29R</td><td class="num">1.47</td></tr>
+          <tr><td>USDCHF</td><td class="num">16</td><td class="num positive">+3.87R</td><td class="num">1.48</td></tr>
+          <tr><td>USDJPY</td><td class="num">11</td><td class="num positive">+3.84R</td><td class="num">1.76</td></tr>
+          <tr><td>AUDCAD</td><td class="num">18</td><td class="num positive">+1.60R</td><td class="num">1.16</td></tr>
+          <tr><td>GBPNZD</td><td class="num">11</td><td class="num positive">+1.39R</td><td class="num">1.23</td></tr>
+          <tr><td>NZDJPY</td><td class="num">14</td><td class="num positive">+0.68R</td><td class="num">1.08</td></tr>
+          <tr><td>CHFJPY</td><td class="num">12</td><td class="num positive">+0.31R</td><td class="num">1.04</td></tr>
+          <tr><td>EURJPY</td><td class="num">22</td><td class="num positive">+0.18R</td><td class="num">1.01</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Nearby alternative: legacy TP 1.25R had 235 trades, +62.67R, PF 1.61, and 5.08R max drawdown. Swing/retrace stays archived as a stricter challenger, not the current baseline.</p>
+    </section>
+  </main>
+</body>
+</html>
