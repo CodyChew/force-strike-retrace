@@ -1,0 +1,14 @@
+[project]
+name = "force-strike-lab"
+version = "0.1.0"
+description = "MT5-direct research lab for Force Strike bar formations."
+requires-python = ">=3.11"
+dependencies = [
+  "numpy",
+  "pandas"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+

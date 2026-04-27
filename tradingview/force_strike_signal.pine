@@ -1,0 +1,418 @@
+//@version=6
+indicator(
+     "Force Strike Signal",
+     "Force Strike",
+     overlay = true,
+     max_bars_back = 1000,
+     max_boxes_count = 200,
+     max_labels_count = 200)
+
+// This indicator ports the current force_strike_lab signal logic for chart-side
+// visual validation on TradingView candles.
+//
+// Important chart-source boundary:
+// - TradingView signals are evaluated only from the OHLC candles shown on the
+//   active TradingView chart.
+// - Python/MT5 research evaluates the same rule family on the MT5 candle data
+//   loaded into force_strike_lab.
+// - Both can be correct for their own chart stream even when signal bars differ.
+//
+// Python remains the source of truth for basket backtests, fills, costs, and
+// candidate ranking. This Pine script is the client-facing visual signal layer.
+
+string groupDisplay = "Display"
+showAccepted = input.bool(true, "Show accepted signals", group = groupDisplay)
+showRejected = input.bool(false, "Show rejected raw patterns", group = groupDisplay)
+showMotherRange = input.bool(true, "Draw mother range", group = groupDisplay)
+showDiagnostics = input.bool(false, "Show diagnostic label", group = groupDisplay)
+confirmOnClose = input.bool(true, "Confirm on candle close", group = groupDisplay)
+maxDrawings = input.int(80, "Max setup drawings to keep", minval = 10, maxval = 180, group = groupDisplay)
+
+string groupPattern = "Pattern"
+minTotalBarsInput = input.int(3, "Minimum formation bars", minval = 3, maxval = 6, group = groupPattern)
+maxTotalBarsInput = input.int(6, "Maximum formation bars", minval = 3, maxval = 6, group = groupPattern)
+
+string groupContext = "Context"
+useContext = input.bool(true, "Require trend context", group = groupContext)
+requireFirstRetracementContext = input.bool(true, "Require impulse/retracement context", group = groupContext)
+atrWindow = input.int(14, "ATR window", minval = 2, group = groupContext)
+smaFastLength = input.int(20, "Fast SMA", minval = 2, group = groupContext)
+smaSlowLength = input.int(50, "Slow SMA", minval = 2, group = groupContext)
+smaTouchBufferAtr = input.float(0.0, "SMA touch buffer ATR", minval = 0.0, step = 0.25, group = groupContext)
+minContextZoneBufferAtr = input.float(0.5, "Minimum zone buffer ATR", minval = 0.0, step = 0.25, group = groupContext)
+contextLookbackBars = input.int(120, "Anchor lookback bars", minval = 6, maxval = 300, group = groupContext)
+minImpulseAtr = input.float(1.5, "Minimum impulse ATR", minval = 0.0, step = 0.25, group = groupContext)
+trendSideLookbackBars = input.int(24, "Trend-side lookback bars", minval = 1, maxval = 100, group = groupContext)
+minTrendSideRatio = input.float(0.45, "Minimum trend-side ratio", minval = 0.0, maxval = 1.0, step = 0.05, group = groupContext)
+minAnchorEfficiency = input.float(0.22, "Minimum anchor efficiency", minval = 0.0, step = 0.01, group = groupContext)
+minSmaSlopeAtr = input.float(0.10, "Minimum 50-SMA slope ATR", minval = 0.0, step = 0.05, group = groupContext)
+minPreMotherRetraceAtr = input.float(0.75, "Minimum pre-mother retrace ATR", minval = 0.0, step = 0.25, group = groupContext)
+minPriorRetraceCloseAtr = input.float(0.50, "Minimum prior retrace close ATR", minval = 0.0, step = 0.25, group = groupContext)
+minPreMotherRetraceBars = input.int(1, "Minimum pre-mother retrace bars", minval = 0, maxval = 20, group = groupContext)
+recentProgressLookbackBars = input.int(12, "Recent progress lookback bars", minval = 1, maxval = 100, group = groupContext)
+maxAnchorBarsWithoutRecentProgress = input.int(12, "Max anchor bars before stale check", minval = 0, maxval = 100, group = groupContext)
+minRecentProgressAtr = input.float(-0.25, "Minimum recent progress ATR", step = 0.25, group = groupContext)
+
+int minBars = math.min(minTotalBarsInput, maxTotalBarsInput)
+int maxBars = math.max(minTotalBarsInput, maxTotalBarsInput)
+
+float trValue = ta.tr(true)
+float atrValue = ta.sma(trValue, atrWindow)
+float smaFast = ta.sma(close, smaFastLength)
+float smaSlow = ta.sma(close, smaSlowLength)
+
+plot(smaFast, "20 SMA", color = color.new(color.orange, 0), linewidth = 1)
+plot(smaSlow, "50 SMA", color = color.new(color.red, 0), linewidth = 1)
+
+var array<box> motherBoxes = array.new<box>()
+var array<label> diagnosticLabels = array.new<label>()
+
+f_close_location(int off) =>
+    float barRange = high[off] - low[off]
+    barRange <= 0.0 ? 0.5 : (close[off] - low[off]) / barRange
+
+f_is_bullish_bar(int off) =>
+    (high[off] > low[off]) and f_close_location(off) >= (2.0 / 3.0)
+
+f_is_bearish_bar(int off) =>
+    (high[off] > low[off]) and f_close_location(off) <= (1.0 / 3.0)
+
+f_basic_context_ok(int signalOff, int side, float structureLow, float structureHigh, float bufferAtr) =>
+    float rowAtr = atrValue[signalOff]
+    float fast = smaFast[signalOff]
+    float slow = smaSlow[signalOff]
+    float rowClose = close[signalOff]
+    bool hasValues = not na(rowAtr) and rowAtr > 0.0 and not na(fast) and not na(slow)
+    float buffer = bufferAtr * rowAtr
+    float zoneLow = math.min(fast, slow)
+    float zoneHigh = math.max(fast, slow)
+    bool overlapsZone = (structureLow <= zoneHigh + buffer) and (structureHigh >= zoneLow - buffer)
+    bool passed = false
+    if hasValues
+        passed := side > 0 ? (fast > slow and rowClose >= zoneLow - buffer and overlapsZone) : (fast < slow and rowClose <= zoneHigh + buffer and overlapsZone)
+    passed
+
+f_find_anchor(int motherOff, int side) =>
+    int lastOppositeOff = na
+    for stepIndex = 0 to contextLookbackBars - 1
+        int off = motherOff + contextLookbackBars - stepIndex
+        if not na(close[off]) and not na(smaSlow[off])
+            if side > 0 and close[off] <= smaSlow[off]
+                lastOppositeOff := off
+            else if side < 0 and close[off] >= smaSlow[off]
+                lastOppositeOff := off
+    int anchorOff = na
+    if not na(lastOppositeOff)
+        int anchorSpan = lastOppositeOff - motherOff
+        for stepIndex = 1 to anchorSpan
+            int off = lastOppositeOff - stepIndex
+            if na(anchorOff) and not na(close[off]) and not na(smaSlow[off])
+                if side > 0 and close[off] > smaSlow[off]
+                    anchorOff := off
+                else if side < 0 and close[off] < smaSlow[off]
+                    anchorOff := off
+    anchorOff
+
+f_impulse_extremes(int anchorOff, int motherOff) =>
+    float hi = na
+    float lo = na
+    int impulseSpan = anchorOff - motherOff
+    for stepIndex = 0 to impulseSpan
+        int off = anchorOff - stepIndex
+        if not na(high[off]) and not na(low[off])
+            hi := na(hi) ? high[off] : math.max(hi, high[off])
+            lo := na(lo) ? low[off] : math.min(lo, low[off])
+    [hi, lo]
+
+f_trend_side_ratio(int motherOff, int side) =>
+    int total = 0
+    int onSide = 0
+    for off = motherOff to motherOff + trendSideLookbackBars
+        if not na(close[off])
+            total += 1
+            bool closeOnTrendSide = side > 0 ? close[off] > smaSlow[off] : close[off] < smaSlow[off]
+            if closeOnTrendSide
+                onSide += 1
+    total > 0 ? float(onSide) / float(total) : na
+
+f_pre_mother_retrace(int anchorOff, int motherOff, int side, float rowAtr) =>
+    float retraceAtr = 0.0
+    int retraceBars = 0
+    if rowAtr > 0.0 and anchorOff - motherOff > 1
+        if side > 0
+            float peak = na
+            int peakOff = na
+            int preMotherSpan = anchorOff - motherOff - 1
+            for stepIndex = 0 to preMotherSpan
+                int off = anchorOff - stepIndex
+                if not na(high[off]) and (na(peak) or high[off] > peak)
+                    peak := high[off]
+                    peakOff := off
+            if not na(peakOff) and peakOff - motherOff - 1 > 0
+                float minAfter = na
+                int afterPeakBars = peakOff - motherOff - 1
+                for stepIndex = 0 to afterPeakBars - 1
+                    int off = peakOff - 1 - stepIndex
+                    if not na(low[off])
+                        minAfter := na(minAfter) ? low[off] : math.min(minAfter, low[off])
+                if not na(minAfter)
+                    retraceAtr := math.max((peak - minAfter) / rowAtr, 0.0)
+                    retraceBars := peakOff - motherOff - 1
+        else
+            float trough = na
+            int troughOff = na
+            int preMotherSpan = anchorOff - motherOff - 1
+            for stepIndex = 0 to preMotherSpan
+                int off = anchorOff - stepIndex
+                if not na(low[off]) and (na(trough) or low[off] < trough)
+                    trough := low[off]
+                    troughOff := off
+            if not na(troughOff) and troughOff - motherOff - 1 > 0
+                float maxAfter = na
+                int afterTroughBars = troughOff - motherOff - 1
+                for stepIndex = 0 to afterTroughBars - 1
+                    int off = troughOff - 1 - stepIndex
+                    if not na(high[off])
+                        maxAfter := na(maxAfter) ? high[off] : math.max(maxAfter, high[off])
+                if not na(maxAfter)
+                    retraceAtr := math.max((maxAfter - trough) / rowAtr, 0.0)
+                    retraceBars := troughOff - motherOff - 1
+    [retraceAtr, retraceBars]
+
+f_pre_mother_retrace_close(int anchorOff, int motherOff, int side, float rowAtr) =>
+    float retraceCloseAtr = 0.0
+    if rowAtr > 0.0 and anchorOff - motherOff > 1
+        if side > 0
+            float peak = na
+            int peakOff = na
+            int preMotherSpan = anchorOff - motherOff - 1
+            for stepIndex = 0 to preMotherSpan
+                int off = anchorOff - stepIndex
+                if not na(high[off]) and (na(peak) or high[off] > peak)
+                    peak := high[off]
+                    peakOff := off
+            if not na(peakOff) and peakOff - motherOff - 1 > 0
+                float minCloseAfter = na
+                for stepIndex = 0 to peakOff - motherOff - 2
+                    int off = peakOff - 1 - stepIndex
+                    if not na(close[off])
+                        minCloseAfter := na(minCloseAfter) ? close[off] : math.min(minCloseAfter, close[off])
+                if not na(minCloseAfter)
+                    retraceCloseAtr := math.max((close[peakOff] - minCloseAfter) / rowAtr, 0.0)
+        else
+            float trough = na
+            int troughOff = na
+            int preMotherSpan = anchorOff - motherOff - 1
+            for stepIndex = 0 to preMotherSpan
+                int off = anchorOff - stepIndex
+                if not na(low[off]) and (na(trough) or low[off] < trough)
+                    trough := low[off]
+                    troughOff := off
+            if not na(troughOff) and troughOff - motherOff - 1 > 0
+                float maxCloseAfter = na
+                for stepIndex = 0 to troughOff - motherOff - 2
+                    int off = troughOff - 1 - stepIndex
+                    if not na(close[off])
+                        maxCloseAfter := na(maxCloseAfter) ? close[off] : math.max(maxCloseAfter, close[off])
+                if not na(maxCloseAfter)
+                    retraceCloseAtr := math.max((maxCloseAfter - close[troughOff]) / rowAtr, 0.0)
+    retraceCloseAtr
+
+f_trend_context_ok(int motherOff, int signalOff, int side, float structureLow, float structureHigh) =>
+    bool passed = false
+    string diag = ""
+    float zoneBufferAtr = math.max(smaTouchBufferAtr, minContextZoneBufferAtr)
+    bool basicOk = f_basic_context_ok(signalOff, side, structureLow, structureHigh, zoneBufferAtr)
+    if not basicOk
+        diag := "Fail: 20/50 zone"
+    else
+        float rowAtr = atrValue[signalOff]
+        int anchorOff = f_find_anchor(motherOff, side)
+        if na(rowAtr) or rowAtr <= 0.0
+            diag := "Fail: ATR"
+        else if na(anchorOff) or anchorOff <= motherOff
+            diag := "Fail: no 50-SMA anchor"
+        else
+            float anchorClose = close[anchorOff]
+            float anchorSma = smaSlow[anchorOff]
+            float signalSma = smaSlow[signalOff]
+            [impulseHigh, impulseLow] = f_impulse_extremes(anchorOff, motherOff)
+            float impulseAtr = side > 0 ? (impulseHigh - anchorClose) / rowAtr : (anchorClose - impulseLow) / rowAtr
+            bool anchorPriceOk = side > 0 ? anchorClose < structureLow : anchorClose > structureHigh
+            bool impulseOk = impulseAtr >= minImpulseAtr
+            float smaSlopeAtr = side > 0 ? (signalSma - anchorSma) / rowAtr : (anchorSma - signalSma) / rowAtr
+            bool smaSlopeOk = smaSlopeAtr >= minSmaSlopeAtr
+            float impulseRange = impulseHigh - impulseLow
+            float efficiency = impulseRange > 0.0 ? math.abs(close[motherOff] - anchorClose) / impulseRange : na
+            bool efficiencyOk = not na(efficiency) and efficiency >= minAnchorEfficiency
+            float ratio = f_trend_side_ratio(motherOff, side)
+            bool ratioOk = not na(ratio) and ratio >= minTrendSideRatio
+            [retraceAtr, retraceBars] = f_pre_mother_retrace(anchorOff, motherOff, side, rowAtr)
+            float retraceCloseAtr = f_pre_mother_retrace_close(anchorOff, motherOff, side, rowAtr)
+            bool retraceOk = retraceAtr >= minPreMotherRetraceAtr and retraceBars >= minPreMotherRetraceBars
+            bool retraceCloseOk = retraceCloseAtr >= minPriorRetraceCloseAtr
+            bool recentOk = true
+            float recentAtr = na
+            if anchorOff - motherOff > maxAnchorBarsWithoutRecentProgress
+                int recentStartOff = motherOff + recentProgressLookbackBars
+                recentAtr := not na(close[recentStartOff]) ? ((close[motherOff] - close[recentStartOff]) * side / rowAtr) : na
+                recentOk := not na(recentAtr) and recentAtr >= minRecentProgressAtr
+            if not anchorPriceOk
+                diag := "Fail: anchor side"
+            else if not impulseOk
+                diag := "Fail: impulse " + str.tostring(impulseAtr, "#.##") + " ATR"
+            else if not smaSlopeOk
+                diag := "Fail: 50-SMA slope " + str.tostring(smaSlopeAtr, "#.##") + " ATR"
+            else if not efficiencyOk
+                diag := "Fail: efficiency " + str.tostring(efficiency, "#.##")
+            else if not ratioOk
+                diag := "Fail: trend ratio " + str.tostring(ratio, "#.##")
+            else if not retraceOk
+                diag := "Fail: retrace " + str.tostring(retraceAtr, "#.##") + " ATR / " + str.tostring(retraceBars) + " bars"
+            else if not retraceCloseOk
+                diag := "Fail: retrace close " + str.tostring(retraceCloseAtr, "#.##") + " ATR"
+            else if not recentOk
+                diag := "Fail: stale trend " + str.tostring(recentAtr, "#.##") + " ATR"
+            else
+                passed := true
+                diag := "OK | Imp " + str.tostring(impulseAtr, "#.##") + " ATR | Ret " + str.tostring(retraceAtr, "#.##") + " ATR | RetC " + str.tostring(retraceCloseAtr, "#.##") + " ATR | Anchor " + str.tostring(anchorOff - motherOff) + " bars"
+    [passed, diag]
+
+f_active_context_ok(int motherOff, int signalOff, int side, float structureLow, float structureHigh) =>
+    bool passed = true
+    string diag = "Raw pattern"
+    if useContext
+        if requireFirstRetracementContext
+            [trendPassed, trendDiag] = f_trend_context_ok(motherOff, signalOff, side, structureLow, structureHigh)
+            passed := trendPassed
+            diag := trendDiag
+        else
+            passed := f_basic_context_ok(signalOff, side, structureLow, structureHigh, smaTouchBufferAtr)
+            diag := passed ? "OK | 20/50 zone" : "Fail: 20/50 zone"
+    [passed, diag]
+
+f_pattern_at(int motherOff, int signalOff) =>
+    bool ok = false
+    int side = 0
+    string breakout = ""
+    float motherHigh = high[motherOff]
+    float motherLow = low[motherOff]
+    float structureHigh = na
+    float structureLow = na
+    if not na(motherHigh) and not na(motherLow) and motherOff - signalOff + 1 >= minBars
+        int firstBabyOff = motherOff - 1
+        bool barTwoInside = high[firstBabyOff] <= motherHigh and low[firstBabyOff] >= motherLow
+        if barTwoInside
+            bool brokeLow = false
+            bool brokeHigh = false
+            for off = signalOff to motherOff
+                if not na(high[off]) and not na(low[off])
+                    structureHigh := na(structureHigh) ? high[off] : math.max(structureHigh, high[off])
+                    structureLow := na(structureLow) ? low[off] : math.min(structureLow, low[off])
+            for off = signalOff to motherOff - 1
+                brokeLow := brokeLow or low[off] < motherLow
+                brokeHigh := brokeHigh or high[off] > motherHigh
+            bool closeInside = close[signalOff] >= motherLow and close[signalOff] <= motherHigh
+            if closeInside and not (brokeLow and brokeHigh)
+                if brokeLow and f_is_bullish_bar(signalOff)
+                    ok := true
+                    side := 1
+                    breakout := "below mother low"
+                else if brokeHigh and f_is_bearish_bar(signalOff)
+                    ok := true
+                    side := -1
+                    breakout := "above mother high"
+    [ok, side, motherHigh, motherLow, structureHigh, structureLow, breakout]
+
+f_has_prior_signal(int motherOff, bool requireActiveContext) =>
+    bool found = false
+    int oldestSignalOff = motherOff - minBars + 1
+    if oldestSignalOff >= 1
+        for stepIndex = 0 to oldestSignalOff - 1
+            int sigOff = oldestSignalOff - stepIndex
+            if not found
+                [priorOk, priorSide, priorMotherHigh, priorMotherLow, priorStructureHigh, priorStructureLow, priorBreakout] = f_pattern_at(motherOff, sigOff)
+                if priorOk
+                    if requireActiveContext
+                        [priorCtxOk, priorDiag] = f_active_context_ok(motherOff, sigOff, priorSide, priorStructureLow, priorStructureHigh)
+                        found := priorCtxOk
+                    else
+                        found := true
+    found
+
+bool rawSignal = false
+bool acceptedSignal = false
+int foundSide = 0
+int foundMotherOff = na
+float foundMotherHigh = na
+float foundMotherLow = na
+string foundBreakout = ""
+string foundDiag = ""
+
+for stepIndex = 0 to maxBars - minBars
+    int totalBars = maxBars - stepIndex
+    if not acceptedSignal
+        int motherOff = totalBars - 1
+        [patternOk, patternSide, motherHigh, motherLow, structureHigh, structureLow, breakout] = f_pattern_at(motherOff, 0)
+        if patternOk
+            [ctxOk, ctxDiag] = f_active_context_ok(motherOff, 0, patternSide, structureLow, structureHigh)
+            bool priorAccepted = f_has_prior_signal(motherOff, true)
+            bool priorRaw = f_has_prior_signal(motherOff, false)
+            bool acceptedCandidate = ctxOk and not priorAccepted
+            bool rejectedCandidate = not ctxOk and not priorRaw
+            if acceptedCandidate or (not rawSignal and rejectedCandidate)
+                rawSignal := true
+                acceptedSignal := acceptedCandidate
+                foundSide := patternSide
+                foundMotherOff := motherOff
+                foundMotherHigh := motherHigh
+                foundMotherLow := motherLow
+                foundBreakout := breakout
+                foundDiag := ctxDiag
+
+bool closeConfirmed = not confirmOnClose or barstate.isconfirmed
+bool showAcceptedSignal = showAccepted and acceptedSignal and closeConfirmed
+bool showRejectedSignal = showRejected and rawSignal and not acceptedSignal and closeConfirmed
+bool showAnySignal = showAcceptedSignal or showRejectedSignal
+color signalColor = acceptedSignal ? (foundSide > 0 ? color.lime : color.red) : color.gray
+
+plotshape(showAcceptedSignal and foundSide > 0, "Bullish Force Strike", style = shape.triangleup, location = location.belowbar, color = color.lime, text = "FS", textcolor = color.white, size = size.small)
+plotshape(showAcceptedSignal and foundSide < 0, "Bearish Force Strike", style = shape.triangledown, location = location.abovebar, color = color.red, text = "FS", textcolor = color.white, size = size.small)
+plotshape(showRejectedSignal and foundSide > 0, "Rejected Bullish Force Strike", style = shape.circle, location = location.belowbar, color = color.gray, text = "FS?", textcolor = color.white, size = size.tiny)
+plotshape(showRejectedSignal and foundSide < 0, "Rejected Bearish Force Strike", style = shape.circle, location = location.abovebar, color = color.gray, text = "FS?", textcolor = color.white, size = size.tiny)
+
+if showAnySignal and showMotherRange and not na(foundMotherOff)
+    box setupBox = box.new(
+         left = bar_index - foundMotherOff,
+         top = foundMotherHigh,
+         right = bar_index,
+         bottom = foundMotherLow,
+         xloc = xloc.bar_index,
+         border_color = color.new(signalColor, 0),
+         bgcolor = color.new(signalColor, 88))
+    array.push(motherBoxes, setupBox)
+
+if showAnySignal and showDiagnostics
+    string direction = foundSide > 0 ? "Bullish FS" : "Bearish FS"
+    string state = acceptedSignal ? "ACCEPTED" : "REJECTED"
+    string labelText = direction + " | " + state + "\n" + foundBreakout + "\n" + foundDiag
+    label diagnosticLabel = label.new(
+         x = bar_index,
+         y = foundSide > 0 ? low : high,
+         text = labelText,
+         xloc = xloc.bar_index,
+         yloc = yloc.price,
+         style = foundSide > 0 ? label.style_label_up : label.style_label_down,
+         color = color.new(signalColor, 0),
+         textcolor = color.white,
+         size = size.small)
+    array.push(diagnosticLabels, diagnosticLabel)
+
+while array.size(motherBoxes) > maxDrawings
+    box.delete(array.shift(motherBoxes))
+
+while array.size(diagnosticLabels) > maxDrawings
+    label.delete(array.shift(diagnosticLabels))
+
+alertcondition(showAcceptedSignal and foundSide > 0, "Bullish Force Strike", "Bullish Force Strike accepted on {{ticker}} {{interval}}")
+alertcondition(showAcceptedSignal and foundSide < 0, "Bearish Force Strike", "Bearish Force Strike accepted on {{ticker}} {{interval}}")

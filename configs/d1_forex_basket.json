@@ -1,0 +1,41 @@
+{
+  "project_name": "force_strike_lab",
+  "symbols": ["EURUSD", "EURGBP", "GBPAUD", "GBPJPY"],
+  "timeframe": "D1",
+  "history_years": 10,
+  "date_start_utc": null,
+  "date_end_utc": null,
+  "data_dir": "data/raw",
+  "report_dir": "reports/force_strike",
+  "costs": {
+    "fallback_spread_points": 10.0,
+    "fallback_commission_points": 0.0,
+    "entry_slippage_points": 0.0,
+    "exit_slippage_points": 0.0
+  },
+  "strategy": {
+    "min_total_bars": 3,
+    "max_total_bars": 6,
+    "atr_window": 14,
+    "sma_fast": 20,
+    "sma_slow": 50,
+    "require_first_retracement_context": true,
+    "context_lookback_bars": 120,
+    "min_impulse_atr": 1.5,
+    "prior_pullback_atr": 1.0,
+    "min_context_zone_buffer_atr": 0.5,
+    "trend_side_lookback_bars": 24,
+    "min_trend_side_ratio": 0.45,
+    "min_anchor_efficiency": 0.22,
+    "min_pre_mother_retrace_atr": 0.75,
+    "min_pre_mother_retrace_bars": 1,
+    "recent_progress_lookback_bars": 12,
+    "max_anchor_bars_without_recent_progress": 12,
+    "min_recent_progress_atr": -0.25,
+    "max_risk_atr": 1.25,
+    "stop_models": ["structure", "atr", "wider"],
+    "target_rs": [1.0, 1.25, 1.5, 2.0, 2.5],
+    "sma_touch_buffer_atrs": [0.0, 0.25, 0.5],
+    "structure_stop_buffer_atr": 0.0
+  }
+}
