@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Force Strike Findings Dashboard</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #667085;
+      --line: #d9dee7;
+      --green: #16885f;
+      --green-soft: #dff3eb;
+      --red: #c93a3a;
+      --red-soft: #f8e3e1;
+      --amber: #b7791f;
+      --amber-soft: #fff0cd;
+      --teal: #257d8b;
+      --violet: #6957c2;
+      --blue: #2b6cb0;
+      --shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: "Segoe UI", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    main {
+      width: min(1480px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.15;
+      font-weight: 720;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 17px;
+      line-height: 1.25;
+      font-weight: 700;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.25;
+      color: var(--muted);
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .subhead {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 780px;
+      line-height: 1.45;
+    }
+
+    .stamp {
+      padding: 10px 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .kpis {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-bottom: 16px;
+    }
+
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 118px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .kpi strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 28px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .kpi .note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .positive {
+      color: var(--green);
+    }
+
+    .negative {
+      color: var(--red);
+    }
+
+    .neutral {
+      color: var(--teal);
+    }
+
+    .section {
+      margin-top: 16px;
+      padding: 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .section-header .summary {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      max-width: 660px;
+    }
+
+    .comparison-grid {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      align-items: stretch;
+    }
+
+    .chart-panel {
+      min-height: 300px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      overflow: hidden;
+    }
+
+    .chart-panel.tall {
+      min-height: 560px;
+    }
+
+    .chart-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .chart-title span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .mini {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+      min-height: 102px;
+    }
+
+    .mini .value {
+      margin-top: 8px;
+      font-size: 22px;
+      font-weight: 760;
+      line-height: 1;
+    }
+
+    .mini .delta {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      min-width: 980px;
+      font-size: 13px;
+    }
+
+    th {
+      text-align: left;
+      background: #edf1f7;
+      color: #344054;
+      padding: 10px 12px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #e9edf3;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    td.num,
+    th.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #eef2ff;
+      color: var(--violet);
+    }
+
+    .tag.win {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .tag.loss {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .coverage {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .coverage-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcfe;
+    }
+
+    .coverage-card .date {
+      margin-top: 8px;
+      font-size: 16px;
+      font-weight: 720;
+    }
+
+    .coverage-card .rows {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 1100px) {
+      .kpis,
+      .comparison-grid,
+      .coverage {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100vw - 20px, 720px);
+        padding-top: 14px;
+      }
+
+      header,
+      .kpis,
+      .comparison-grid,
+      .matrix,
+      .coverage {
+        grid-template-columns: 1fr;
+      }
+
+      .stamp {
+        text-align: left;
+        white-space: normal;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Force Strike Findings Dashboard</h1>
+        <p class="subhead">Fresh MT5 reruns through 2026-04-27 comparing the original legacy context, latest prior swing high/low retrace logic, and the main timeframe/basket variants.</p>
+      </div>
+      <div class="stamp">Generated from refreshed local reports<br>Unit tests: 23 passed</div>
+    </header>
+
+    <section class="grid kpis" aria-label="Key findings">
+      <div class="kpi">
+        <h3>Exact G8 Logic Delta</h3>
+        <strong class="positive">+29.12R</strong>
+        <p class="note">Latest swing/retrace full net R minus original legacy full net R.</p>
+      </div>
+      <div class="kpi">
+        <h3>G8 Signal Cut</h3>
+        <strong class="neutral">-33%</strong>
+        <p class="note">Signals fell from 544 to 362 after the stricter prior swing filter.</p>
+      </div>
+      <div class="kpi">
+        <h3>G8 Drawdown Cut</h3>
+        <strong class="positive">-57%</strong>
+        <p class="note">Max drawdown fell from 37.59R to 16.16R in the exact comparison.</p>
+      </div>
+      <div class="kpi">
+        <h3>Best Quality Result</h3>
+        <strong class="positive">D1 4-pair</strong>
+        <p class="note">Still the strongest shape: +20.14R, PF 1.66, max DD 5.61R.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2>Original vs Latest Prior Swing Logic</h2>
+          <p class="summary">This isolates the rule change on the same 28-pair D1 G8 universe and refreshed data. It does not compare against the smaller original 4-pair D1 basket.</p>
+        </div>
+        <span class="tag win">Latest wins exact comparison</span>
+      </div>
+      <div class="grid comparison-grid">
+        <div class="chart-panel">
+          <div class="chart-title">
+            <h3>Net R by phase</h3>
+            <span>Original legacy vs latest swing/retrace</span>
+          </div>
+          <div id="phaseChart"></div>
+        </div>
+        <div>
+          <div class="matrix">
+            <div class="mini">
+              <h3>Full net R</h3>
+              <div class="value positive">+11.27R</div>
+              <div class="delta">Latest vs original -17.85R</div>
+            </div>
+            <div class="mini">
+              <h3>Holdout net R</h3>
+              <div class="value positive">+6.38R</div>
+              <div class="delta">Original holdout was +2.99R</div>
+            </div>
+            <div class="mini">
+              <h3>Trades</h3>
+              <div class="value neutral">289</div>
+              <div class="delta">Original legacy took 482 trades</div>
+            </div>
+          </div>
+          <div class="chart-panel">
+            <div class="chart-title">
+              <h3>Risk and activity</h3>
+              <span>Lower is better for drawdown</span>
+            </div>
+            <div id="activityChart"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2>Strategy Runs</h2>
+          <p class="summary">The broader rerun shows why the pre-crash comment sounded worse: the latest G8 expansion is better than legacy G8, but weaker than the original focused D1 4-pair result.</p>
+        </div>
+        <span class="tag">8 refreshed runs</span>
+      </div>
+      <div class="grid comparison-grid">
+        <div class="chart-panel tall">
+          <div class="chart-title">
+            <h3>Full net R ranking</h3>
+            <span>Top candidate per report</span>
+          </div>
+          <div id="runChart"></div>
+        </div>
+        <div class="chart-panel tall">
+          <div class="chart-title">
+            <h3>Return vs drawdown</h3>
+            <span>Bubble size reflects trade count</span>
+          </div>
+          <div id="scatterChart"></div>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top: 16px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Run</th>
+              <th>Candidate</th>
+              <th class="num">Signals</th>
+              <th class="num">Trades</th>
+              <th class="num">Full R</th>
+              <th class="num">PF</th>
+              <th class="num">DD R</th>
+              <th class="num">Discovery</th>
+              <th class="num">Selection</th>
+              <th class="num">Holdout</th>
+              <th class="num">Holdout PF</th>
+            </tr>
+          </thead>
+          <tbody id="runsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2>D1 G8 Symbol Contribution</h2>
+          <p class="summary">Latest G8 improves the logic comparison, but contribution is uneven. Positive net R is concentrated in selected non-USD crosses, while several majors remain weak.</p>
+        </div>
+        <span class="tag loss">Broad basket still weak</span>
+      </div>
+      <div class="grid comparison-grid">
+        <div class="chart-panel tall">
+          <div class="chart-title">
+            <h3>Latest swing/retrace G8</h3>
+            <span>Top and bottom symbols by net R</span>
+          </div>
+          <div id="symbolChart"></div>
+        </div>
+        <div class="chart-panel tall">
+          <div class="chart-title">
+            <h3>Original legacy G8</h3>
+            <span>Top and bottom symbols by net R</span>
+          </div>
+          <div id="legacySymbolChart"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h2>Data Coverage</h2>
+          <p class="summary">The reruns used current local MT5 data. The exact original-vs-latest D1 G8 comparison used the same refreshed D1 files.</p>
+        </div>
+        <span class="tag win">Coverage aligned</span>
+      </div>
+      <div class="grid coverage">
+        <div class="coverage-card">
+          <h3>M30 baseline</h3>
+          <div class="date">Ends 2026-04-27 14:00 UTC</div>
+          <div class="rows">4 symbols, 37,197 to 37,200 rows</div>
+        </div>
+        <div class="coverage-card">
+          <h3>H4 baseline</h3>
+          <div class="date">Ends 2026-04-27 12:00 UTC</div>
+          <div class="rows">4 symbols, 7,776 rows each</div>
+        </div>
+        <div class="coverage-card">
+          <h3>D1 G8 comparison</h3>
+          <div class="date">Ends 2026-04-27 00:00 UTC</div>
+          <div class="rows">28 symbols, 2,561 to 2,593 rows</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const runs = [
+      { label: "M30 baseline 4-pair", short: "M30 4-pair", candidate: "fs_atr_tp1p5_sma0p0_risk1p25", signals: 1098, trades: 964, fullR: -241.888, pf: 0.661, dd: 253.007, discovery: -129.723, selection: -84.690, holdout: -27.476, holdoutPf: 0.785 },
+      { label: "H4 baseline 4-pair", short: "H4 4-pair", candidate: "fs_structure_tp2p0_sma0p0_risk1p25", signals: 225, trades: 173, fullR: -12.254, pf: 0.899, dd: 16.174, discovery: -22.264, selection: 7.626, holdout: 2.384, holdoutPf: 1.125 },
+      { label: "D1 baseline 4-pair", short: "D1 4-pair", candidate: "fs_atr_tp1p5_sma0p0_risk1p25", signals: 73, trades: 64, fullR: 20.144, pf: 1.663, dd: 5.607, discovery: 5.073, selection: 6.764, holdout: 8.308, holdoutPf: 2.642 },
+      { label: "H4 swing_retrace_v1 4-pair", short: "H4 swing", candidate: "fs_structure_tp2p0_sma0p0_risk1p25", signals: 162, trades: 126, fullR: -4.886, pf: 0.944, dd: 11.028, discovery: -15.833, selection: 4.203, holdout: 6.744, holdoutPf: 1.531 },
+      { label: "D1 swing_retrace_v1 4-pair", short: "D1 swing", candidate: "fs_atr_tp1p5_sma0p0_risk1p25", signals: 52, trades: 47, fullR: 19.896, pf: 1.983, dd: 3.029, discovery: 8.200, selection: 3.868, holdout: 7.828, holdoutPf: 2.934 },
+      { label: "D1 swing_retrace_v1 majors", short: "D1 majors", candidate: "fs_atr_tp1p5_sma0p0_risk1p25", signals: 97, trades: 90, fullR: -3.660, pf: 0.934, dd: 12.531, discovery: -2.692, selection: -3.124, holdout: 2.157, holdoutPf: 1.152 },
+      { label: "D1 latest swing_retrace_v1 G8", short: "Latest G8", candidate: "fs_wider_tp1p5_sma0p0_risk1p25", signals: 362, trades: 289, fullR: 11.270, pf: 1.066, dd: 16.159, discovery: 8.588, selection: -3.696, holdout: 6.378, holdoutPf: 1.174 },
+      { label: "D1 original legacy G8", short: "Legacy G8", candidate: "fs_atr_tp1p25_sma0p0_risk1p25", signals: 544, trades: 482, fullR: -17.848, pf: 0.935, dd: 37.594, discovery: -17.914, selection: -2.926, holdout: 2.992, holdoutPf: 1.049 }
+    ];
+
+    const latestG8Symbols = [
+      ["GBPAUD", 11.393, 11], ["GBPJPY", 7.268, 15], ["GBPCHF", 4.819, 10], ["CHFJPY", 2.897, 7], ["NZDJPY", 2.849, 7],
+      ["CADCHF", 2.825, 7], ["EURAUD", 2.402, 10], ["AUDCHF", 2.273, 15], ["AUDNZD", 2.253, 10], ["NZDUSD", 1.816, 13],
+      ["GBPCAD", -3.084, 8], ["NZDCHF", -3.926, 11], ["EURCHF", -5.689, 13], ["GBPUSD", -5.694, 13], ["USDCAD", -6.665, 14]
+    ];
+
+    const legacyG8Symbols = [
+      ["GBPAUD", 10.802, 16], ["GBPCHF", 9.715, 17], ["AUDCHF", 8.053, 23], ["AUDUSD", 7.513, 17], ["GBPJPY", 5.898, 23],
+      ["USDJPY", 4.597, 11], ["AUDCAD", 4.093, 18], ["AUDNZD", 3.585, 14], ["EURJPY", 2.656, 24], ["EURUSD", 2.042, 18],
+      ["EURCHF", -7.067, 18], ["NZDUSD", -7.434, 25], ["GBPCAD", -8.200, 17], ["GBPUSD", -8.763, 22], ["NZDCHF", -10.674, 19], ["USDCAD", -12.266, 21]
+    ];
+
+    const colors = {
+      green: "#16885f",
+      red: "#c93a3a",
+      amber: "#b7791f",
+      teal: "#257d8b",
+      blue: "#2b6cb0",
+      violet: "#6957c2",
+      line: "#d9dee7",
+      muted: "#667085",
+      ink: "#17202a"
+    };
+
+    const fmt = (value, digits = 2) => Number(value).toFixed(digits);
+    const signed = (value, digits = 2) => `${value >= 0 ? "+" : ""}${fmt(value, digits)}`;
+
+    function text(x, y, value, opts = {}) {
+      const anchor = opts.anchor || "start";
+      const size = opts.size || 12;
+      const fill = opts.fill || colors.ink;
+      const weight = opts.weight || 500;
+      return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${size}" fill="${fill}" font-weight="${weight}">${value}</text>`;
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function divergingBars(target, data, opts = {}) {
+      const width = opts.width || 860;
+      const rowH = opts.rowH || 34;
+      const margin = { top: 18, right: 92, bottom: 20, left: opts.left || 180 };
+      const height = margin.top + margin.bottom + data.length * rowH;
+      const values = data.map(d => d.value);
+      const maxAbs = Math.max(1, ...values.map(v => Math.abs(v)));
+      const plotW = width - margin.left - margin.right;
+      const zeroX = margin.left + plotW / 2;
+      const scale = (plotW / 2) / maxAbs;
+      const rows = data.map((d, i) => {
+        const cy = margin.top + i * rowH + rowH / 2;
+        const val = d.value;
+        const x = val >= 0 ? zeroX : zeroX + val * scale;
+        const w = Math.max(2, Math.abs(val * scale));
+        const fill = val >= 0 ? colors.green : colors.red;
+        return [
+          text(margin.left - 10, cy + 4, escapeHtml(d.label), { anchor: "end", size: 12, fill: colors.ink, weight: 650 }),
+          `<rect x="${x}" y="${cy - 9}" width="${w}" height="18" rx="3" fill="${fill}"></rect>`,
+          text(val >= 0 ? x + w + 7 : x - 7, cy + 4, `${signed(val)}R`, { anchor: val >= 0 ? "start" : "end", size: 12, fill, weight: 700 })
+        ].join("");
+      }).join("");
+      const svg = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${opts.label || "Diverging bar chart"}">
+        <rect x="0" y="0" width="${width}" height="${height}" fill="transparent"></rect>
+        <line x1="${zeroX}" y1="${margin.top - 8}" x2="${zeroX}" y2="${height - margin.bottom + 4}" stroke="${colors.line}" stroke-width="1"></line>
+        ${text(zeroX, height - 4, "0R", { anchor: "middle", size: 11, fill: colors.muted })}
+        ${rows}
+      </svg>`;
+      document.getElementById(target).innerHTML = svg;
+    }
+
+    function phaseChart() {
+      const data = [
+        { label: "Legacy full", value: -17.848 },
+        { label: "Latest full", value: 11.270 },
+        { label: "Legacy discovery", value: -17.914 },
+        { label: "Latest discovery", value: 8.588 },
+        { label: "Legacy selection", value: -2.926 },
+        { label: "Latest selection", value: -3.696 },
+        { label: "Legacy holdout", value: 2.992 },
+        { label: "Latest holdout", value: 6.378 }
+      ];
+      divergingBars("phaseChart", data, { width: 860, left: 170, label: "Original versus latest net R by phase" });
+    }
+
+    function activityChart() {
+      const width = 560;
+      const height = 260;
+      const margin = { top: 20, right: 20, bottom: 42, left: 58 };
+      const items = [
+        { group: "Signals", legacy: 544, latest: 362, color: colors.teal },
+        { group: "Trades", legacy: 482, latest: 289, color: colors.violet },
+        { group: "Max DD", legacy: 37.594, latest: 16.159, color: colors.amber }
+      ];
+      const max = Math.max(...items.flatMap(d => [d.legacy, d.latest]));
+      const plotH = height - margin.top - margin.bottom;
+      const groupW = (width - margin.left - margin.right) / items.length;
+      const barW = Math.min(44, groupW / 4);
+      const bars = items.map((d, i) => {
+        const baseX = margin.left + i * groupW + groupW / 2;
+        const legacyH = d.legacy / max * plotH;
+        const latestH = d.latest / max * plotH;
+        const y0 = height - margin.bottom;
+        return `
+          <rect x="${baseX - barW - 3}" y="${y0 - legacyH}" width="${barW}" height="${legacyH}" rx="4" fill="#a7b0c2"></rect>
+          <rect x="${baseX + 3}" y="${y0 - latestH}" width="${barW}" height="${latestH}" rx="4" fill="${d.color}"></rect>
+          ${text(baseX - barW / 2 - 3, y0 - legacyH - 6, fmt(d.legacy, d.group === "Max DD" ? 1 : 0), { anchor: "middle", size: 11, fill: colors.muted, weight: 700 })}
+          ${text(baseX + barW / 2 + 3, y0 - latestH - 6, fmt(d.latest, d.group === "Max DD" ? 1 : 0), { anchor: "middle", size: 11, fill: d.color, weight: 700 })}
+          ${text(baseX, height - 16, d.group, { anchor: "middle", size: 12, fill: colors.ink, weight: 700 })}
+        `;
+      }).join("");
+      document.getElementById("activityChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Activity and drawdown comparison">
+        <line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" stroke="${colors.line}"></line>
+        ${bars}
+        <rect x="${width - 156}" y="10" width="12" height="12" fill="#a7b0c2"></rect>
+        ${text(width - 138, 21, "Original", { size: 11, fill: colors.muted })}
+        <rect x="${width - 88}" y="10" width="12" height="12" fill="${colors.teal}"></rect>
+        ${text(width - 70, 21, "Latest", { size: 11, fill: colors.muted })}
+      </svg>`;
+    }
+
+    function runChart() {
+      const data = [...runs].sort((a, b) => b.fullR - a.fullR).map(d => ({ label: d.short, value: d.fullR }));
+      divergingBars("runChart", data, { width: 760, left: 115, rowH: 42, label: "Full net R ranking by run" });
+    }
+
+    function scatterChart() {
+      const width = 760;
+      const height = 526;
+      const margin = { top: 24, right: 34, bottom: 54, left: 62 };
+      const plotW = width - margin.left - margin.right;
+      const plotH = height - margin.top - margin.bottom;
+      const xMax = Math.max(...runs.map(d => d.dd)) * 1.08;
+      const yVals = runs.map(d => d.fullR);
+      const yMin = Math.min(...yVals) * 1.08;
+      const yMax = Math.max(...yVals) * 1.25;
+      const x = v => margin.left + (v / xMax) * plotW;
+      const y = v => margin.top + (yMax - v) / (yMax - yMin) * plotH;
+      const zeroY = y(0);
+      const points = runs.map((d, i) => {
+        const radius = Math.max(5, Math.min(20, Math.sqrt(d.trades) * 0.58));
+        const fill = d.fullR >= 0 ? colors.green : colors.red;
+        const labelDx = d.short === "M30 4-pair" ? -8 : 8;
+        const anchor = d.short === "M30 4-pair" ? "end" : "start";
+        return `
+          <circle cx="${x(d.dd)}" cy="${y(d.fullR)}" r="${radius}" fill="${fill}" opacity="0.78"></circle>
+          ${text(x(d.dd) + labelDx, y(d.fullR) - radius - 5, escapeHtml(d.short), { anchor, size: 11, fill: colors.ink, weight: 700 })}
+        `;
+      }).join("");
+      document.getElementById("scatterChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Return versus drawdown">
+        <line x1="${margin.left}" y1="${zeroY}" x2="${width - margin.right}" y2="${zeroY}" stroke="${colors.line}" stroke-width="1"></line>
+        <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}" stroke="${colors.line}" stroke-width="1"></line>
+        <line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" stroke="${colors.line}" stroke-width="1"></line>
+        ${text(margin.left, height - 18, "Max drawdown R", { size: 12, fill: colors.muted })}
+        ${text(18, margin.top + 8, "Full R", { size: 12, fill: colors.muted })}
+        ${text(margin.left - 7, zeroY + 4, "0", { anchor: "end", size: 11, fill: colors.muted })}
+        ${points}
+      </svg>`;
+    }
+
+    function symbolBars(target, rows) {
+      const data = rows.map(([label, value, trades]) => ({ label: `${label} (${trades})`, value }));
+      divergingBars(target, data, { width: 760, left: 115, rowH: 31, label: "Symbol contribution by net R" });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("runsTable");
+      tbody.innerHTML = runs.map(d => {
+        const state = d.fullR >= 0 ? "win" : "loss";
+        return `<tr>
+          <td><span class="tag ${state}">${escapeHtml(d.label)}</span></td>
+          <td>${escapeHtml(d.candidate)}</td>
+          <td class="num">${d.signals}</td>
+          <td class="num">${d.trades}</td>
+          <td class="num ${d.fullR >= 0 ? "positive" : "negative"}">${signed(d.fullR)}R</td>
+          <td class="num">${fmt(d.pf, 3)}</td>
+          <td class="num">${fmt(d.dd, 2)}R</td>
+          <td class="num ${d.discovery >= 0 ? "positive" : "negative"}">${signed(d.discovery)}R</td>
+          <td class="num ${d.selection >= 0 ? "positive" : "negative"}">${signed(d.selection)}R</td>
+          <td class="num ${d.holdout >= 0 ? "positive" : "negative"}">${signed(d.holdout)}R</td>
+          <td class="num">${fmt(d.holdoutPf, 3)}</td>
+        </tr>`;
+      }).join("");
+    }
+
+    phaseChart();
+    activityChart();
+    runChart();
+    scatterChart();
+    symbolBars("symbolChart", latestG8Symbols);
+    symbolBars("legacySymbolChart", legacyG8Symbols);
+    renderTable();
+  </script>
+</body>
+</html>
