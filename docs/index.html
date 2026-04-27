@@ -6,11 +6,12 @@
   <title>Force Strike Findings Dashboard</title>
   <style>
     :root {
-      --bg: #f5f7fa;
+      --bg: #eef2f6;
       --panel: #ffffff;
       --ink: #17202a;
       --muted: #667085;
       --line: #d9dee7;
+      --line-strong: #b8c2cf;
       --green: #16885f;
       --green-soft: #dff3eb;
       --red: #c93a3a;
@@ -35,6 +36,15 @@
       letter-spacing: 0;
     }
 
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: 280px;
+      background: #dfe8f0;
+      z-index: -1;
+    }
+
     main {
       width: min(1480px, calc(100vw - 32px));
       margin: 0 auto;
@@ -45,13 +55,13 @@
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 20px;
-      align-items: end;
+      align-items: start;
       margin-bottom: 18px;
     }
 
     h1 {
       margin: 0;
-      font-size: 30px;
+      font-size: 34px;
       line-height: 1.15;
       font-weight: 720;
     }
@@ -94,6 +104,238 @@
       color: var(--muted);
       text-align: right;
       white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .nav-links a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 10px;
+      color: #28445f;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .decision-board {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .decision-main,
+    .decision-side {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .verdict-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .verdict {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 750;
+      color: var(--green);
+      background: var(--green-soft);
+      border: 1px solid #a8dcc8;
+    }
+
+    .decision-main h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .decision-main p {
+      margin-top: 10px;
+      color: var(--muted);
+      line-height: 1.48;
+      font-size: 14px;
+      max-width: 900px;
+    }
+
+    .ticker-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .ticker {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: #123629;
+      background: var(--green-soft);
+      border: 1px solid #aadcca;
+      font-weight: 760;
+      font-size: 13px;
+    }
+
+    .decision-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .decision-metric {
+      padding: 12px;
+      background: #f7fafc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-height: 86px;
+    }
+
+    .decision-metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .decision-metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .decision-side h2 {
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+
+    .priority-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .priority {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+    }
+
+    .priority .rank {
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #e8eef6;
+      color: #28445f;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .priority strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    .priority span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .scenario {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcfe;
+      min-height: 178px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .scenario .headline {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+
+    .scenario h3 {
+      color: var(--ink);
+      text-transform: none;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .scenario p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .scenario .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .scenario .stats div {
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .scenario .stats strong {
+      display: block;
+      margin-top: 3px;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 800;
     }
 
     .grid {
@@ -323,8 +565,14 @@
     @media (max-width: 1100px) {
       .kpis,
       .comparison-grid,
-      .coverage {
+      .coverage,
+      .decision-board,
+      .scenario-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .decision-main {
+        grid-column: 1 / -1;
       }
     }
 
@@ -338,7 +586,10 @@
       .kpis,
       .comparison-grid,
       .matrix,
-      .coverage {
+      .coverage,
+      .decision-board,
+      .decision-metrics,
+      .scenario-grid {
         grid-template-columns: 1fr;
       }
 
@@ -358,10 +609,134 @@
     <header>
       <div>
         <h1>Force Strike Findings Dashboard</h1>
-        <p class="subhead">Fresh MT5 reruns through 2026-04-27 comparing the original legacy context, latest prior swing high/low retrace logic, and the main timeframe/basket variants.</p>
+        <p class="subhead">A decision board for the D1 Force Strike retracement idea: current strategy state, refreshed backtest results, and practical alternatives for the next research pass.</p>
+        <nav class="nav-links" aria-label="Dashboard sections">
+          <a href="#current-state">Current State</a>
+          <a href="#alternatives">Alternatives</a>
+          <a href="#g8-comparison">Legacy vs Swing</a>
+          <a href="#runs">Backtests</a>
+          <a href="#symbols">Tickers</a>
+          <a href="#coverage">Coverage</a>
+        </nav>
       </div>
       <div class="stamp">Generated from refreshed local reports<br>Unit tests: 23 passed</div>
     </header>
+
+    <section class="decision-board" id="current-state">
+      <div class="decision-main">
+        <div class="verdict-row">
+          <span class="verdict">Current state: research edge, not live-ready</span>
+          <span class="tag">D1 only</span>
+          <span class="tag win">Best first paper candidate</span>
+        </div>
+        <h2>Trade the focused D1 swing/retrace core first, then compare it against the aggressive legacy basket.</h2>
+        <p>The cleanest candidate is not the highest historical R. It is the one with the best balance of return, drawdown, split behavior, and leave-one-symbol-out robustness. M30 is rejected, H4 is not standalone, and broad G8 should not be traded unfiltered.</p>
+        <div class="ticker-list" aria-label="Recommended tickers">
+          <span class="ticker">GBPAUD</span>
+          <span class="ticker">GBPJPY</span>
+          <span class="ticker">GBPCHF</span>
+          <span class="ticker">CHFJPY</span>
+        </div>
+        <div class="decision-metrics">
+          <div class="decision-metric">
+            <span>Strategy</span>
+            <strong>D1 swing/retrace</strong>
+          </div>
+          <div class="decision-metric">
+            <span>Candidate</span>
+            <strong>ATR TP 2.0R</strong>
+          </div>
+          <div class="decision-metric">
+            <span>Backtest</span>
+            <strong class="positive">+33.31R</strong>
+          </div>
+          <div class="decision-metric">
+            <span>Max drawdown</span>
+            <strong>3.07R</strong>
+          </div>
+        </div>
+      </div>
+      <aside class="decision-side">
+        <h2>What You Care About</h2>
+        <div class="priority-list">
+          <div class="priority">
+            <span class="rank">1</span>
+            <div>
+              <strong>Is there a real strategy edge?</strong>
+              <span>Current answer: maybe on D1, specifically in a focused cross basket. Not on M30, not broad G8 unfiltered.</span>
+            </div>
+          </div>
+          <div class="priority">
+            <span class="rank">2</span>
+            <div>
+              <strong>Which rules should stay?</strong>
+              <span>`swing_retrace_v1` improves broad G8 quality, but legacy-positive symbols deserve an aggressive comparison track.</span>
+            </div>
+          </div>
+          <div class="priority">
+            <span class="rank">3</span>
+            <div>
+              <strong>What should be tested next?</strong>
+              <span>Run paper/forward tests for the conservative core and aggressive legacy-positive basket side by side.</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section" id="alternatives">
+      <div class="section-header">
+        <div>
+          <h2>Decision Alternatives</h2>
+          <p class="summary">These are the practical choices from the current evidence. The conservative path optimizes robustness; the aggressive path optimizes historical R and needs forward validation.</p>
+        </div>
+        <span class="tag">Choose by risk tolerance</span>
+      </div>
+      <div class="scenario-grid">
+        <div class="scenario">
+          <div>
+            <div class="headline">
+              <h3>Conservative Core</h3>
+              <span class="tag win">Recommended</span>
+            </div>
+            <p>D1 `swing_retrace_v1`, `fs_atr_tp2p0_sma0p0_risk1p25`, trading GBPAUD, GBPJPY, GBPCHF, CHFJPY.</p>
+          </div>
+          <div class="stats">
+            <div>Net R<strong>+33.31</strong></div>
+            <div>PF<strong>2.64</strong></div>
+            <div>DD<strong>3.07R</strong></div>
+          </div>
+        </div>
+        <div class="scenario">
+          <div>
+            <div class="headline">
+              <h3>Aggressive Legacy Positive</h3>
+              <span class="tag">Higher R</span>
+            </div>
+            <p>Legacy mode on all full-sample positive symbols. Strong historical result, but selected with hindsight and more basket complexity.</p>
+          </div>
+          <div class="stats">
+            <div>Net R<strong>+62.67</strong></div>
+            <div>PF<strong>1.61</strong></div>
+            <div>DD<strong>7.86R</strong></div>
+          </div>
+        </div>
+        <div class="scenario">
+          <div>
+            <div class="headline">
+              <h3>Broad G8 Latest</h3>
+              <span class="tag loss">Do not trade raw</span>
+            </div>
+            <p>Latest swing/retrace is better than legacy on all 28 pairs, but weak pairs dilute the edge and increase drawdown.</p>
+          </div>
+          <div class="stats">
+            <div>Net R<strong>+11.27</strong></div>
+            <div>PF<strong>1.07</strong></div>
+            <div>DD<strong>16.16R</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="grid kpis" aria-label="Key findings">
       <div class="kpi">
@@ -386,7 +761,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="g8-comparison">
       <div class="section-header">
         <div>
           <h2>Original vs Latest Prior Swing Logic</h2>
@@ -431,7 +806,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="runs">
       <div class="section-header">
         <div>
           <h2>Strategy Runs</h2>
@@ -477,7 +852,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="symbols">
       <div class="section-header">
         <div>
           <h2>D1 G8 Symbol Contribution</h2>
@@ -503,7 +878,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="coverage">
       <div class="section-header">
         <div>
           <h2>Data Coverage</h2>
